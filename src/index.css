@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 230 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 25% 12%;
+    --primary: 231 60% 44%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 150 30% 94%;
+    --secondary-foreground: 230 25% 12%;
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 36 100% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 35%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --border: 220 16% 90%;
+    --input: 220 16% 90%;
+    --ring: 231 60% 44%;
+    --radius: 0.75rem;
+    --sidebar-background: 231 60% 44%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 231 60% 44%;
+    --sidebar-accent: 231 60% 38%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 231 40% 52%;
+    --sidebar-ring: 0 0% 100%;
+    --sidebar-muted: 231 30% 80%;
+  }
+}
+
+@layer base {
+  * { @apply border-border box-border; }
+  body {
+    @apply text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: #0f172a;
+  }
+}
+
+@layer utilities {
+  .status-open { @apply bg-blue-50 text-blue-600; }
+  .status-in-progress { @apply bg-amber-50 text-amber-600; }
+  .status-resolved { @apply bg-green-50 text-green-700; }
+  .status-closed { @apply bg-gray-100 text-gray-500; }
+  .status-awaiting { @apply bg-red-50 text-red-600; }
+  .priority-high { @apply bg-red-50 text-red-600; }
+  .priority-medium { @apply bg-amber-50 text-amber-600; }
+  .priority-low { @apply bg-green-50 text-green-700; }
+}
+
+/* Hide scrollbar inside phone frame while preserving scroll functionality */
+.phone-scroll::-webkit-scrollbar { display: none; }
+.phone-scroll { -ms-overflow-style: none; scrollbar-width: none; }
