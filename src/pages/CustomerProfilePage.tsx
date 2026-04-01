@@ -24,10 +24,10 @@ export default function CustomerProfilePage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Installation Request", icon: Wrench, action: () => navigate("/orders"), highlight: true },
-          { label: "Raise Complaint", icon: AlertTriangle, action: () => navigate("/orders") },
-          { label: "Service Request", icon: Wrench, action: () => navigate("/orders") },
-          { label: "Complaint Against Service", icon: MessageSquare, action: () => navigate("/orders") },
+          { label: "Installation Request", icon: Wrench, action: () => navigate(`/ticket/create?customerId=${customer.id}&actionType=installation`), highlight: true },
+          { label: "Raise Complaint", icon: AlertTriangle, action: () => navigate(`/ticket/create?customerId=${customer.id}&actionType=complaint`) },
+          { label: "Service Request", icon: Wrench, action: () => navigate(`/ticket/create?customerId=${customer.id}&actionType=service`) },
+          { label: "Complaint Against Service", icon: MessageSquare, action: () => navigate(`/ticket/create?customerId=${customer.id}&actionType=complaint_against_service`) },
         ].map((a) => (
           <button
             key={a.label}
