@@ -40,7 +40,7 @@ function CreateInstallationModal({ item, orderId, onClose, onSubmit }: { item: O
       <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-foreground">Create Installation Request</h3>
+            <h3 className="text-sm font-bold text-foreground">Create Installation Request</h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-accent rounded-lg"><X className="w-5 h-5" /></button>
         </div>
@@ -58,44 +58,44 @@ function CreateInstallationModal({ item, orderId, onClose, onSubmit }: { item: O
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-foreground mb-1">Customer Name *</label>
-              <input required value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Full name" />
+              <input required value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Full name" />
             </div>
             <div>
               <label className="block text-xs font-medium text-foreground mb-1">Mobile Number *</label>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-muted-foreground">+91</span>
-                <input required value={form.mobile} onChange={(e) => { setForm({ ...form, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) }); setError(""); }} className="flex-1 px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="10-digit mobile" />
+                <input required value={form.mobile} onChange={(e) => { setForm({ ...form, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) }); setError(""); }} className="flex-1 px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="10-digit mobile" />
               </div>
               {error && <p className="text-xs text-destructive mt-1">{error}</p>}
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Installation Address *</label>
-            <textarea required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Full installation address" />
+            <textarea required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Full installation address" />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-foreground mb-1">City *</label>
-              <input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="City" />
+              <input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="City" />
             </div>
             <div>
               <label className="block text-xs font-medium text-foreground mb-1">Pincode *</label>
-              <input required pattern="[0-9]{6}" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="6-digit" />
+              <input required pattern="[0-9]{6}" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="6-digit" />
             </div>
             <div>
               <label className="block text-xs font-medium text-foreground mb-1">Preferred Date</label>
-              <input type="date" value={form.preferredDate} onChange={(e) => setForm({ ...form, preferredDate: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <input type="date" value={form.preferredDate} onChange={(e) => setForm({ ...form, preferredDate: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Additional Notes</label>
-            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Floor, landmark, special instructions..." />
+            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Floor, landmark, special instructions..." />
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="submit" className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90">
+            <button type="submit" className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:opacity-90">
               <Wrench className="w-4 h-4" /> Create Installation Request
             </button>
-            <button type="button" onClick={onClose} className="px-5 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-card border border-border text-foreground rounded-xl text-xs font-semibold hover:bg-accent">
               Cancel
             </button>
           </div>
@@ -154,11 +154,11 @@ export default function OrderDetailPage() {
         </Link>
         <div>
           <h1 className="text-base font-bold text-foreground">{order.id}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Placed on {new Date(order.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
-        <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium ${
+        <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
           order.status === "Delivered" ? "status-resolved" : "status-in-progress"
         }`}>
           {order.status}
@@ -166,8 +166,8 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Order Summary */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <div className="grid grid-cols-3 gap-4 text-sm">
+      <div className="bg-card rounded-xl border border-border p-4">
+        <div className="grid grid-cols-3 gap-3 text-xs">
           <div>
             <p className="text-muted-foreground">Total Amount</p>
             <p className="font-semibold text-foreground">₹{order.total.toLocaleString("en-IN")}</p>
@@ -185,25 +185,35 @@ export default function OrderDetailPage() {
 
       {/* Shipments with Unified View */}
       <div className="space-y-4">
-        <h2 className="text-sm font-bold text-foreground">Shipments</h2>
+        <h2 className="text-xs font-bold text-foreground">Shipments</h2>
         {order.shipments.map((shipment) => (
           <div key={shipment.id} className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Truck className="w-5 h-5 text-primary" />
+            <div className="p-4 border-b border-border flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Truck className="w-4 h-4 text-primary flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{shipment.id}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs font-semibold text-foreground">{shipment.id}</p>
+                  <p className="text-[10px] text-muted-foreground">
                     {shipment.status === "Delivered" ? "Delivered on" : "Expected by"}{" "}
                     {new Date(shipment.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </p>
                 </div>
               </div>
-              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                shipment.status === "Delivered" ? "status-resolved" : "status-in-progress"
-              }`}>
-                {shipment.status}
-              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {shipment.status !== "Delivered" && (
+                  <button
+                    onClick={() => navigate(`/ticket/create?orderId=${order.id}&shipmentId=${shipment.id}&level=shipment&source=orders`)}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-[10px] font-semibold hover:bg-orange-100 transition-colors"
+                  >
+                    <Ticket className="w-3 h-3" /> Create Ticket
+                  </button>
+                )}
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
+                  shipment.status === "Delivered" ? "status-resolved" : "status-in-progress"
+                }`}>
+                  {shipment.status}
+                </span>
+              </div>
             </div>
             <div className="divide-y divide-border">
               {shipment.items.map((item) => {
@@ -216,103 +226,111 @@ export default function OrderDetailPage() {
                 const showLink    = !item.customerMobile && !linkSent && !isInstallCreated;
                 const showNotDone = item.installationEligible && !isInstallCreated && !isNotDone;
 
+                const isDelivered = shipment.status === "Delivered";
+
                 return (
-                  <div key={item.id} className="px-4 py-4 space-y-3">
+                  <div key={item.id} className="px-4 py-3 space-y-2.5">
                     {/* Item row */}
                     <Link
                       to={`/orders/${order.id}/item/${item.id}`}
                       className="flex items-center justify-between hover:opacity-80 transition-opacity group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-muted-foreground" />
+                        <div className="w-9 h-9 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="w-4 h-4 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            SKU: {item.sku} · SN: {item.serialNumber} · Qty: {item.quantity}
+                          <p className="text-xs font-medium text-foreground">{item.name}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            SN: {item.serialNumber} · Qty: {item.quantity}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <p className="text-sm font-semibold text-foreground">₹{item.price.toLocaleString("en-IN")}</p>
+                        <p className="text-xs font-semibold text-foreground">₹{item.price.toLocaleString("en-IN")}</p>
                         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
                       </div>
                     </Link>
 
                     {/* Status tags */}
-                    <div className="flex flex-wrap gap-1.5 ml-14">
+                    <div className="flex flex-wrap gap-1.5 ml-12">
                       {item.installationEligible && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
                           isInstallCreated
                             ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]"
                             : "bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]"
                         }`}>
-                          {isInstallCreated ? "✓ Installation Requested" : "Installation Eligible"}
+                          {isInstallCreated ? "✓ Install Requested" : "Install Eligible"}
                         </span>
                       )}
                       {isNotDone && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-destructive/10 text-destructive">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-destructive/10 text-destructive">
                           ✗ Not Done by JMD
                         </span>
                       )}
                       {linkSent && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">
-                          ✓ Service Link Sent (+91{linkSent})
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">
+                          ✓ Link Sent (+91{linkSent})
                         </span>
                       )}
                       {so && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor[so.status]}`}>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${statusColor[so.status]}`}>
                           SO: {so.id} — {so.status}
                         </span>
                       )}
                       {installRequests[item.id] && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-muted text-muted-foreground">
                           🔧 {installRequests[item.id].customerName} · +91{installRequests[item.id].mobile}
                         </span>
                       )}
                     </div>
 
-                    {/* ── Quick Action Buttons ── */}
-                    <div className="ml-14 space-y-1.5">
-                      {/* Raise Installation Request — primary blue, full width */}
-                      {showInstall && (
-                        <button
-                          onClick={() => setInstallItem(item)}
-                          className="w-full flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
-                        >
-                          <Wrench className="w-3.5 h-3.5" /> Raise Installation Request
-                        </button>
-                      )}
-
-                      {/* Send Service Link — green, full width */}
-                      {showLink && (
-                        <button
-                          onClick={() => { setServiceLinkItemId(item.id); setModalMobile(""); setModalMobileError(""); }}
-                          className="w-full flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20 rounded-xl text-xs font-semibold hover:bg-[hsl(var(--success))]/20 transition-colors"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" /> Send Service Link
-                        </button>
-                      )}
-
-                      {/* Not Done by Us + Create Ticket — side by side */}
-                      <div className="flex gap-1.5">
-                        {showNotDone && (
+                    {/* ── Quick Action Buttons (only when Delivered) ── */}
+                    {isDelivered ? (
+                      <div className="ml-12 space-y-1.5">
+                        {/* Raise Installation Request */}
+                        {showInstall && (
                           <button
-                            onClick={() => { setNotDoneItemId(item.id); setModalMobile(""); setModalMobileError(""); }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-xs font-semibold hover:bg-destructive/20 transition-colors"
+                            onClick={() => setInstallItem(item)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
                           >
-                            <Ban className="w-3.5 h-3.5" /> Not Done by Us
+                            <Wrench className="w-3.5 h-3.5" /> Raise Installation Request
                           </button>
                         )}
-                        <button
-                          onClick={() => navigate(`/ticket/create?orderId=${order.id}&itemId=${item.id}&shipmentId=${shipment.id}`)}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-card text-foreground border border-border rounded-xl text-xs font-semibold hover:bg-accent transition-colors"
-                        >
-                          <Ticket className="w-3.5 h-3.5" /> Create Ticket
-                        </button>
+
+                        {/* Send Service Link */}
+                        {showLink && (
+                          <button
+                            onClick={() => { setServiceLinkItemId(item.id); setModalMobile(""); setModalMobileError(""); }}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20 rounded-xl text-xs font-semibold hover:bg-[hsl(var(--success))]/20 transition-colors"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" /> Send Service Link
+                          </button>
+                        )}
+
+                        {/* Not Done by Us + Create Ticket */}
+                        <div className="flex gap-1.5">
+                          {showNotDone && (
+                            <button
+                              onClick={() => { setNotDoneItemId(item.id); setModalMobile(""); setModalMobileError(""); }}
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-xs font-semibold hover:bg-destructive/20 transition-colors"
+                            >
+                              <Ban className="w-3.5 h-3.5" /> Not Done by Us
+                            </button>
+                          )}
+                          <button
+                            onClick={() => navigate(`/ticket/create?orderId=${order.id}&itemId=${item.id}&shipmentId=${shipment.id}`)}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-card text-foreground border border-border rounded-xl text-xs font-semibold hover:bg-accent transition-colors"
+                          >
+                            <Ticket className="w-3.5 h-3.5" /> Create Ticket
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <p className="ml-12 text-[10px] text-muted-foreground italic">
+                        Item actions available after delivery
+                      </p>
+                    )}
                   </div>
                 );
               })}

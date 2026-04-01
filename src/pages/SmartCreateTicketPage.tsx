@@ -49,14 +49,18 @@ export default function SmartCreateTicketPage() {
     : undefined;
 
   // ── Item-mode: detect customer from serial / mobile ───────────────────────
-  const customerFromItem = item
+  // Customer visibility is only gained AFTER installation, first service, or "not done by us" tagging
+  const customerRevealedForItem =
+    item && (item.installationRequested || !!item.serviceOrder || item.installationNotByUs);
+
+  const customerFromItem = customerRevealedForItem
     ? (mockCustomers.find((c) =>
           c.purchases.some(
-            (p) => p.serialNumber.toLowerCase() === item.serialNumber.toLowerCase()
+            (p) => p.serialNumber.toLowerCase() === item!.serialNumber.toLowerCase()
           )
         ) ??
-        (item.customerMobile
-          ? mockCustomers.find((c) => c.mobile === item.customerMobile)
+        (item!.customerMobile
+          ? mockCustomers.find((c) => c.mobile === item!.customerMobile)
           : undefined))
     : undefined;
 

@@ -69,19 +69,19 @@ export default function ItemDetailPage() {
         </Link>
         <div>
           <h1 className="text-base font-bold text-foreground">Item Details</h1>
-          <p className="text-sm text-muted-foreground">{orderId}</p>
+          <p className="text-xs text-muted-foreground">{orderId}</p>
         </div>
       </div>
 
       {/* Product Card */}
-      <div className="bg-card rounded-xl border border-border p-6">
-        <div className="flex items-start gap-5">
-          <div className="w-20 h-20 bg-accent rounded-xl flex items-center justify-center flex-shrink-0">
-            <Package className="w-10 h-10 text-muted-foreground" />
+      <div className="bg-card rounded-xl border border-border p-4">
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 bg-accent rounded-xl flex items-center justify-center flex-shrink-0">
+            <Package className="w-7 h-7 text-muted-foreground" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-foreground">{item.name}</h2>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-3 text-sm">
+            <h2 className="text-sm font-bold text-foreground">{item.name}</h2>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-xs">
               <div><span className="text-muted-foreground">SKU:</span> <span className="font-medium text-foreground">{item.sku}</span></div>
               <div><span className="text-muted-foreground">Serial No:</span> <span className="font-medium text-foreground">{item.serialNumber}</span></div>
               <div><span className="text-muted-foreground">Category:</span> <span className="font-medium text-foreground">{item.category}</span></div>
@@ -95,13 +95,13 @@ export default function ItemDetailPage() {
 
       {/* Service Order Status */}
       {so && (
-        <div className="bg-card rounded-xl border border-border p-5 space-y-4">
+        <div className="bg-card rounded-xl border border-border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground font-medium">SERVICE ORDER</p>
-              <p className="text-lg font-bold text-foreground">{so.id}</p>
+              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Service Order</p>
+              <p className="text-sm font-bold text-foreground">{so.id}</p>
             </div>
-            <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusColor[so.status]}`}>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${statusColor[so.status]}`}>
               {so.status}
             </span>
           </div>
@@ -119,100 +119,109 @@ export default function ItemDetailPage() {
               );
             })}
           </div>
-          <p className="text-xs text-muted-foreground">📱 Customer: +91{so.customerMobile} · Updated: {new Date(so.updatedAt).toLocaleDateString("en-IN")}</p>
+          <p className="text-[10px] text-muted-foreground">📱 Customer: +91{so.customerMobile} · Updated: {new Date(so.updatedAt).toLocaleDateString("en-IN")}</p>
         </div>
       )}
 
       {/* Tags */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {(item.installationNotByUs || notDoneTagged) && (
-          <span className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full font-medium bg-destructive/10 text-destructive">
-            <Ban className="w-3.5 h-3.5" /> Installation Not Done by Us
+          <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-destructive/10 text-destructive">
+            <Ban className="w-3 h-3" /> Not Done by Us
           </span>
         )}
         {linkSent && !so && (
-          <span className="text-xs px-3 py-1.5 rounded-full font-medium bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">
             ✓ Service Link Sent (+91{serviceMobile})
           </span>
         )}
-        {item.customerMobile && (
-          <span className="text-xs px-3 py-1.5 rounded-full font-medium bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]">
+        {/* Customer mobile only visible after installation/service/tagging */}
+        {item.customerMobile && (item.installationRequested || !!so || item.installationNotByUs || notDoneTagged) && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]">
             📱 +91{item.customerMobile}
           </span>
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3">
-        {item.installationEligible && !item.installationRequested && (
-          <button
-            onClick={() => setShowInstallForm(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            <Wrench className="w-4 h-4" />
-            Raise Installation Request
-          </button>
-        )}
-        {item.installationRequested && (
-          <span className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded-lg text-sm font-medium">
-            ✓ Installation Already Requested
-          </span>
-        )}
-        {!linkSent && !item.customerMobile && (
-          <button
-            onClick={() => setShowServiceLink(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20 rounded-lg text-sm font-medium hover:bg-[hsl(var(--success))]/20 transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Send Service Link
-          </button>
-        )}
-        {!notDoneTagged && !item.installationNotByUs && !item.installationRequested && (
-          <button
-            onClick={() => setShowNotDone(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg text-sm font-medium hover:bg-destructive/20 transition-colors"
-          >
-            <Ban className="w-4 h-4" />
-            Not Done by Us
-          </button>
-        )}
-        <button
-          onClick={() => navigate(`/ticket/create?orderId=${orderId}&itemId=${itemId}&shipmentId=${shipment?.id ?? ""}`)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors"
-        >
-          <Ticket className="w-4 h-4" />
-          Create Ticket
-        </button>
-      </div>
+      {/* Action Buttons — only when shipment is Delivered */}
+      {shipment?.status === "Delivered" ? (
+        <div className="space-y-1.5">
+          {item.installationEligible && !item.installationRequested && (
+            <button
+              onClick={() => setShowInstallForm(true)}
+              className="w-full flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              Raise Installation Request
+            </button>
+          )}
+          {item.installationRequested && (
+            <span className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded-xl text-xs font-semibold">
+              ✓ Installation Already Requested
+            </span>
+          )}
+          {!linkSent && !item.customerMobile && (
+            <button
+              onClick={() => setShowServiceLink(true)}
+              className="w-full flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20 rounded-xl text-xs font-semibold hover:bg-[hsl(var(--success))]/20 transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Send Service Link
+            </button>
+          )}
+          <div className="flex gap-1.5">
+            {!notDoneTagged && !item.installationNotByUs && !item.installationRequested && (
+              <button
+                onClick={() => setShowNotDone(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-xs font-semibold hover:bg-destructive/20 transition-colors"
+              >
+                <Ban className="w-3.5 h-3.5" />
+                Not Done by Us
+              </button>
+            )}
+            <button
+              onClick={() => navigate(`/ticket/create?orderId=${orderId}&itemId=${itemId}&shipmentId=${shipment?.id ?? ""}`)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-card border border-border text-foreground rounded-xl text-xs font-semibold hover:bg-accent transition-colors"
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              Create Ticket
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-muted/50 rounded-xl border border-border px-4 py-3">
+          <p className="text-xs text-muted-foreground text-center">Item actions will be available after delivery</p>
+        </div>
+      )}
 
       {/* Send Service Link Modal */}
       {showServiceLink && (
         <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowServiceLink(false)}>
-          <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-foreground">Send Service Link</h3>
-              <button onClick={() => setShowServiceLink(false)} className="p-1 hover:bg-accent rounded-lg"><X className="w-5 h-5" /></button>
+          <div className="bg-card rounded-2xl border border-border p-5 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground">Send Service Link</h3>
+              <button onClick={() => setShowServiceLink(false)} className="p-1 hover:bg-accent rounded-lg"><X className="w-4 h-4" /></button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">Send a WhatsApp/SMS link to the customer for self-service order creation.</p>
+            <p className="text-xs text-muted-foreground mb-3">Send a WhatsApp/SMS link to the customer for self-service order creation.</p>
             <div className="mb-1">
-              <label className="block text-sm font-medium text-foreground mb-1.5">Customer Mobile Number *</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Customer Mobile Number *</label>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground font-medium">+91</span>
+                <span className="text-xs text-muted-foreground font-medium">+91</span>
                 <input
                   value={serviceMobile}
                   onChange={(e) => { setServiceMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setServiceMobileError(""); }}
-                  className="flex-1 px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Enter 10-digit mobile"
+                  className="flex-1 px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="10-digit mobile"
                 />
               </div>
               {serviceMobileError && <p className="text-xs text-destructive mt-1">{serviceMobileError}</p>}
             </div>
-            <div className="flex gap-2 mt-5">
-              <button onClick={handleSendLink} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[hsl(var(--success))] text-white rounded-lg text-sm font-medium hover:opacity-90">
-                <MessageCircle className="w-4 h-4" /> WhatsApp
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleSendLink} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold hover:opacity-90">
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
               </button>
-              <button onClick={handleSendLink} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90">
-                <Phone className="w-4 h-4" /> SMS
+              <button onClick={handleSendLink} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:opacity-90">
+                <Phone className="w-3.5 h-3.5" /> SMS
               </button>
             </div>
           </div>
@@ -222,27 +231,27 @@ export default function ItemDetailPage() {
       {/* Not Done By Us Modal */}
       {showNotDone && (
         <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowNotDone(false)}>
-          <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-foreground">Installation Not Done by Us</h3>
-              <button onClick={() => setShowNotDone(false)} className="p-1 hover:bg-accent rounded-lg"><X className="w-5 h-5" /></button>
+          <div className="bg-card rounded-2xl border border-border p-5 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground">Installation Not Done by Us</h3>
+              <button onClick={() => setShowNotDone(false)} className="p-1 hover:bg-accent rounded-lg"><X className="w-4 h-4" /></button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">Tag this item as "Installation Not Done by Us" and capture customer mobile.</p>
+            <p className="text-xs text-muted-foreground mb-3">Tag this item as "Installation Not Done by Us" and capture customer mobile.</p>
             <div className="mb-1">
-              <label className="block text-sm font-medium text-foreground mb-1.5">Customer Mobile Number *</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Customer Mobile Number *</label>
               <input
                 value={serviceMobile}
                 onChange={(e) => { setServiceMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setServiceMobileError(""); }}
-                className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Enter 10-digit mobile"
+                className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="10-digit mobile"
               />
               {serviceMobileError && <p className="text-xs text-destructive mt-1">{serviceMobileError}</p>}
             </div>
-            <div className="flex gap-3 mt-5">
-              <button onClick={handleNotDone} className="flex-1 px-4 py-2.5 bg-destructive text-destructive-foreground rounded-lg text-sm font-medium hover:opacity-90">
-                Confirm & Tag
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleNotDone} className="flex-1 py-2.5 bg-destructive text-destructive-foreground rounded-xl text-xs font-bold hover:opacity-90">
+                Confirm &amp; Tag
               </button>
-              <button onClick={() => setShowNotDone(false)} className="px-4 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent">
+              <button onClick={() => setShowNotDone(false)} className="px-4 py-2.5 bg-card border border-border text-foreground rounded-xl text-xs font-semibold hover:bg-accent">
                 Cancel
               </button>
             </div>
@@ -252,57 +261,61 @@ export default function ItemDetailPage() {
 
       {/* Installation Request Form */}
       {showInstallForm && (
-        <div className="bg-card rounded-xl border-2 border-primary/20 p-6">
-          <h3 className="text-lg font-bold text-foreground mb-1">Installation Request</h3>
-          <p className="text-sm text-muted-foreground mb-5">
-            Provide end-customer details for installation. This creates a customer record for future service journeys.
-          </p>
-          <form onSubmit={handleInstallSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Customer Name *</label>
-                <input required value={installForm.customerName} onChange={(e) => setInstallForm({ ...installForm, customerName: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Full name" />
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowInstallForm(false)}>
+          <div className="bg-card rounded-2xl border border-border p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground">Installation Request</h3>
+              <button onClick={() => setShowInstallForm(false)} className="p-1 hover:bg-accent rounded-lg"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Provide end-customer details. This creates a customer record for future service journeys.
+            </p>
+            <div className="bg-accent/50 rounded-xl p-3 mb-4">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Product Details (Auto-filled)</p>
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
+                <div><span className="text-muted-foreground">Product:</span> <span className="text-foreground font-medium">{item.name}</span></div>
+                <div><span className="text-muted-foreground">Serial:</span> <span className="text-foreground font-medium">{item.serialNumber}</span></div>
+              </div>
+            </div>
+            <form onSubmit={handleInstallSubmit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Customer Name *</label>
+                  <input required value={installForm.customerName} onChange={(e) => setInstallForm({ ...installForm, customerName: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Full name" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Mobile Number *</label>
+                  <input required pattern="[0-9]{10}" value={installForm.mobile} onChange={(e) => setInstallForm({ ...installForm, mobile: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="10-digit mobile" />
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Mobile Number *</label>
-                <input required pattern="[0-9]{10}" value={installForm.mobile} onChange={(e) => setInstallForm({ ...installForm, mobile: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="10-digit mobile" />
+                <label className="block text-xs font-medium text-foreground mb-1">Installation Address *</label>
+                <textarea required value={installForm.address} onChange={(e) => setInstallForm({ ...installForm, address: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Full address" />
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Installation Address *</label>
-              <textarea required value={installForm.address} onChange={(e) => setInstallForm({ ...installForm, address: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Full address" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">City *</label>
+                  <input required value={installForm.city} onChange={(e) => setInstallForm({ ...installForm, city: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="City" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Pincode *</label>
+                  <input required pattern="[0-9]{6}" value={installForm.pincode} onChange={(e) => setInstallForm({ ...installForm, pincode: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="6-digit pincode" />
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">City *</label>
-                <input required value={installForm.city} onChange={(e) => setInstallForm({ ...installForm, city: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="City" />
+                <label className="block text-xs font-medium text-foreground mb-1">Additional Notes</label>
+                <textarea value={installForm.notes} onChange={(e) => setInstallForm({ ...installForm, notes: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Floor, landmark, special instructions..." />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Pincode *</label>
-                <input required pattern="[0-9]{6}" value={installForm.pincode} onChange={(e) => setInstallForm({ ...installForm, pincode: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="6-digit pincode" />
+              <div className="flex gap-2 pt-1">
+                <button type="submit" className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity">
+                  Submit Installation Request
+                </button>
+                <button type="button" onClick={() => setShowInstallForm(false)} className="px-4 py-2.5 bg-card border border-border text-foreground rounded-xl text-xs font-semibold hover:bg-accent transition-colors">
+                  Cancel
+                </button>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Additional Notes</label>
-              <textarea value={installForm.notes} onChange={(e) => setInstallForm({ ...installForm, notes: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" rows={2} placeholder="Any special instructions..." />
-            </div>
-            <div className="bg-accent/50 rounded-lg p-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">PRODUCT DETAILS (AUTO-FILLED)</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div><span className="text-muted-foreground">Product:</span> <span className="text-foreground">{item.name}</span></div>
-                <div><span className="text-muted-foreground">Serial:</span> <span className="text-foreground">{item.serialNumber}</span></div>
-                <div><span className="text-muted-foreground">Order:</span> <span className="text-foreground">{orderId}</span></div>
-              </div>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button type="submit" className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-                Submit Installation Request
-              </button>
-              <button type="button" onClick={() => setShowInstallForm(false)} className="px-6 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors">
-                Cancel
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
     </div>
