@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import {
   Headphones, Users, HelpCircle, Phone, MessageCircle, Mail,
   TicketCheck, ChevronRight,
-  Package, AlertTriangle, Wrench, X
+  Package, AlertTriangle, Wrench, X,
+  Truck, CreditCard, RotateCcw,
 } from "lucide-react";
 import {
   mockOrders, mockSelfTickets, mockCustomerTickets
@@ -29,37 +30,54 @@ const TOP_FAQ = [
   { q: "How to track a service order (SO) status?",    tag: "SO Lookup" },
 ];
 
-// ── Help Desk data (formerly DashboardPage) ───────────────────────────────────
-const orderStatusGroups = [
-  { label: "Delivered",  cls: "status-resolved",    count: mockOrders.filter(o => o.status === "Delivered").length },
-  { label: "In Transit", cls: "status-in-progress", count: mockOrders.filter(o => o.status === "In Transit").length },
-  { label: "Processing", cls: "status-open",         count: mockOrders.filter(o => o.status === "Processing").length },
-  { label: "Cancelled",  cls: "status-closed",       count: mockOrders.filter(o => o.status === "Cancelled").length },
-];
+// ── Help Desk data ────────────────────────────────────────────────────────────
 
-const openSelfTickets = mockSelfTickets.filter(t =>
-  t.status === "Open" || t.status === "In Progress" || t.status === "Awaiting Info"
+// a. Active Orders — shipment-level breakdown
+const _today = new Date();
+const _allPairs = mockOrders.flatMap(o => o.shipments.map(s => ({ order: o, shipment: s })));
+
+const _delayedShipments      = _allPairs.filter(({ shipment }) =>
+  shipment.status === "In Transit" && new Date(shipment.deliveryDate) < _today
 );
-const selfPriorityGroups = [
-  { label: "High",   cls: "priority-high",   count: openSelfTickets.filter(t => t.priority === "High").length },
-  { label: "Medium", cls: "priority-medium", count: openSelfTickets.filter(t => t.priority === "Medium").length },
-  { label: "Low",    cls: "priority-low",    count: openSelfTickets.filter(t => t.priority === "Low").length },
+const _inTransitShipments    = _allPairs.filter(({ shipment }) =>
+  shipment.status === "In Transit" && new Date(shipment.deliveryDate) >= _today
+);
+const _outForDeliveryShipments = _allPairs.filter(({ shipment }) =>
+  shipment.status === "Out for Delivery"
+);
+const _processingOrders      = mockOrders.filter(o => o.status === "Processing");
+const activeOrders           = mockOrders.filter(o => o.status !== "Delivered" && o.status !== "Cancelled");
+
+const activeOrderGroups = [
+  { label: "Delayed",          cls: "status-awaiting",    count: _delayedShipments.length },
+  { label: "In Transit",       cls: "status-in-progress", count: _inTransitShipments.length },
+  { label: "Processing",       cls: "status-open",        count: _processingOrders.length },
+  { label: "Out for Delivery", cls: "status-resolved",    count: _outForDeliveryShipments.length },
 ];
 
-const activeCustomerTickets = mockCustomerTickets.filter(t => t.status !== "Closed" && t.status !== "Resolved");
-const customerStatusGroups = [
-  { label: "Open",          cls: "status-open",        count: activeCustomerTickets.filter(t => t.status === "Open").length },
-  { label: "In Progress",   cls: "status-in-progress", count: activeCustomerTickets.filter(t => t.status === "In Progress").length },
-  { label: "Awaiting Info", cls: "status-awaiting",    count: activeCustomerTickets.filter(t => t.status === "Awaiting Info").length },
-];
+// b. Open Refund Tickets (Billing & Payments → Refund Not Received)
+const openRefundTickets = mockSelfTickets.filter(t =>
+  t.category === "Billing & Payments" &&
+  t.subcategory === "Refund Not Received" &&
+  t.status !== "Resolved" && t.status !== "Closed"
+);
 
-const installItems = mockOrders
-  .flatMap(o => o.shipments.flatMap(s => s.items))
-  .filter(i => i.installationEligible || i.installationRequested);
-const installGroups = [
-  { label: "Eligible",     cls: "status-open",       count: installItems.filter(i => i.installationEligible && !i.installationRequested).length },
-  { label: "Requested",    cls: "status-in-progress", count: installItems.filter(i => i.installationRequested).length },
-  { label: "Not by Us",    cls: "status-closed",      count: installItems.filter(i => i.installationNotByUs).length },
+// c. Open Return Tickets (Returns & Refunds category)
+const openReturnTickets = mockSelfTickets.filter(t =>
+  t.category === "Returns & Refunds" &&
+  t.status !== "Resolved" && t.status !== "Closed"
+);
+
+// d. Open Installation Requests (customer tickets — Installation category)
+const openInstallTickets = mockCustomerTickets.filter(t =>
+  t.category === "Installation" &&
+  t.status !== "Resolved" && t.status !== "Closed"
+);
+
+const installStatusGroups = [
+  { label: "Open",          cls: "status-open",        count: openInstallTickets.filter(t => t.status === "Open").length },
+  { label: "In Progress",   cls: "status-in-progress", count: openInstallTickets.filter(t => t.status === "In Progress").length },
+  { label: "Awaiting Info", cls: "status-awaiting",    count: openInstallTickets.filter(t => t.status === "Awaiting Info").length },
 ];
 
 const activity = [
@@ -70,13 +88,41 @@ const activity = [
   { id: "TKT-S-003",    label: "Delivery delay resolved",            time: "4d ago",  status: "Resolved" },
 ];
 
-type StatKey = "orders" | "tickets" | "customers" | "installations";
+type StatKey = "activeOrders" | "refunds" | "returns" | "installations";
 
 const stats: Array<{ key: StatKey; label: string; value: string; change: string; icon: typeof Package; color: string }> = [
-  { key: "orders",        label: "Active Orders", value: "12", change: "+3 this week",    icon: Package,       color: "primary" },
-  { key: "tickets",       label: "Open Tickets",  value: "4",  change: "2 high priority", icon: AlertTriangle, color: "warning" },
-  { key: "customers",     label: "Customer Req.", value: "8",  change: "3 pending action", icon: Users,        color: "info" },
-  { key: "installations", label: "Installations", value: "5",  change: "2 eligible",       icon: Wrench,       color: "success" },
+  {
+    key: "activeOrders",
+    label: "Active Orders",
+    value: String(activeOrders.length),
+    change: `${_delayedShipments.length} delayed · ${_inTransitShipments.length} in transit`,
+    icon: Truck,
+    color: "primary",
+  },
+  {
+    key: "refunds",
+    label: "Open Refund Tickets",
+    value: String(openRefundTickets.length),
+    change: openRefundTickets.length === 0 ? "None pending" : `${openRefundTickets.length} pending`,
+    icon: CreditCard,
+    color: "warning",
+  },
+  {
+    key: "returns",
+    label: "Open Return Tickets",
+    value: String(openReturnTickets.length),
+    change: openReturnTickets.length === 0 ? "None pending" : `${openReturnTickets.length} open`,
+    icon: RotateCcw,
+    color: "info",
+  },
+  {
+    key: "installations",
+    label: "Install Requests",
+    value: String(openInstallTickets.length),
+    change: `${openInstallTickets.filter(t => t.status === "Open").length} new · ${openInstallTickets.filter(t => t.status === "In Progress").length} in progress`,
+    icon: Wrench,
+    color: "success",
+  },
 ];
 
 function DetailPanel({ title, linkTo, linkLabel, onClose, children }: {
@@ -99,10 +145,12 @@ function DetailPanel({ title, linkTo, linkLabel, onClose, children }: {
 }
 
 function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => void }) {
-  if (statKey === "orders") return (
-    <DetailPanel title="Orders by Status" linkTo="/orders" linkLabel="View All Orders" onClose={onClose}>
+
+  // ── a. Active Orders breakdown ────────────────────────────────────────────
+  if (statKey === "activeOrders") return (
+    <DetailPanel title="Active Orders Breakdown" linkTo="/orders" linkLabel="View All Orders" onClose={onClose}>
       <div className="grid grid-cols-2 gap-2 mb-3">
-        {orderStatusGroups.map(g => (
+        {activeOrderGroups.map(g => (
           <div key={g.label} className="flex items-center justify-between bg-muted/50 rounded-lg px-2.5 py-2">
             <span className="text-[11px] text-foreground font-medium">{g.label}</span>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${g.cls}`}>{g.count}</span>
@@ -110,15 +158,17 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
         ))}
       </div>
       <div className="space-y-1.5">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Recent Orders</p>
-        {mockOrders.map(o => (
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Active Orders</p>
+        {activeOrders.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-3">No active orders</p>
+        ) : activeOrders.map(o => (
           <Link key={o.id} to={`/orders/${o.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-primary truncate">{o.id}</p>
+              <p className="text-[11px] font-semibold text-primary truncate">{o.id.slice(0, 14)}…</p>
               <p className="text-[10px] text-muted-foreground">{o.items} items · ₹{o.total.toLocaleString("en-IN")}</p>
             </div>
             <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ml-2 ${
-              o.status === "Delivered" ? "status-resolved" : o.status === "In Transit" ? "status-in-progress" : o.status === "Processing" ? "status-open" : "status-closed"
+              o.status === "In Transit" ? "status-in-progress" : o.status === "Processing" ? "status-open" : "status-closed"
             }`}>{o.status}</span>
           </Link>
         ))}
@@ -126,89 +176,91 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
     </DetailPanel>
   );
 
-  if (statKey === "tickets") return (
-    <DetailPanel title="Open Tickets by Priority" linkTo="/service/self" linkLabel="View All Tickets" onClose={onClose}>
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {selfPriorityGroups.map(g => (
-          <div key={g.label} className="text-center bg-muted/50 rounded-lg p-2">
-            <p className={`text-base font-bold ${g.label === "High" ? "text-red-600" : g.label === "Medium" ? "text-amber-600" : "text-green-700"}`}>{g.count}</p>
-            <p className="text-[10px] text-muted-foreground">{g.label}</p>
-          </div>
-        ))}
-      </div>
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Active Tickets</p>
-        {openSelfTickets.map(t => (
-          <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[11px] font-bold text-primary">{t.id}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold priority-${t.priority.toLowerCase()}`}>{t.priority}</span>
+  // ── b. Open Refund Tickets ────────────────────────────────────────────────
+  if (statKey === "refunds") return (
+    <DetailPanel title="Open Refund Tickets" linkTo="/service/self" linkLabel="View All Tickets" onClose={onClose}>
+      {openRefundTickets.length === 0 ? (
+        <div className="py-5 text-center">
+          <p className="text-xs font-semibold text-foreground">No open refund tickets</p>
+          <p className="text-[10px] text-muted-foreground mt-1">All refund requests are resolved</p>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {openRefundTickets.map(t => (
+            <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-primary">{t.id}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{t.subcategory}</p>
               </div>
-              <p className="text-[10px] text-muted-foreground truncate">{t.category} · {t.subcategory}</p>
-            </div>
-            <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
-              t.status === "Open" ? "status-open" : t.status === "In Progress" ? "status-in-progress" : "status-awaiting"
-            }`}>{t.status}</span>
-          </Link>
-        ))}
-      </div>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
+                t.status === "Open" ? "status-open" : t.status === "In Progress" ? "status-in-progress" : "status-awaiting"
+              }`}>{t.status}</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </DetailPanel>
   );
 
-  if (statKey === "customers") return (
-    <DetailPanel title="Customer Requests by Status" linkTo="/service/customer" linkLabel="Open Customer Hub" onClose={onClose}>
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {customerStatusGroups.map(g => (
-          <div key={g.label} className="text-center bg-muted/50 rounded-lg p-2">
-            <p className={`text-base font-bold ${g.label === "Open" ? "text-blue-600" : g.label === "In Progress" ? "text-amber-600" : "text-red-600"}`}>{g.count}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">{g.label}</p>
-          </div>
-        ))}
-      </div>
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Recent Customer Tickets</p>
-        {activeCustomerTickets.slice(0, 4).map(t => (
-          <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold text-primary">{t.id}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{t.customerName ?? "—"} · {t.category}</p>
-            </div>
-            <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
-              t.status === "Open" ? "status-open" : t.status === "In Progress" ? "status-in-progress" : "status-awaiting"
-            }`}>{t.status}</span>
-          </Link>
-        ))}
-      </div>
+  // ── c. Open Return Tickets ────────────────────────────────────────────────
+  if (statKey === "returns") return (
+    <DetailPanel title="Open Return Tickets" linkTo="/service/self" linkLabel="View All Tickets" onClose={onClose}>
+      {openReturnTickets.length === 0 ? (
+        <div className="py-5 text-center">
+          <p className="text-xs font-semibold text-foreground">No open return tickets</p>
+          <p className="text-[10px] text-muted-foreground mt-1">All return requests are resolved</p>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {openReturnTickets.map(t => (
+            <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-primary">{t.id}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{t.subcategory}</p>
+              </div>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
+                t.status === "Open" ? "status-open" : t.status === "In Progress" ? "status-in-progress" : "status-awaiting"
+              }`}>{t.status}</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </DetailPanel>
   );
 
+  // ── d. Open Installation Requests ─────────────────────────────────────────
   return (
-    <DetailPanel title="Installation Status" linkTo="/orders" linkLabel="View Orders" onClose={onClose}>
+    <DetailPanel title="Open Installation Requests" linkTo="/service/customer" linkLabel="View Customer Hub" onClose={onClose}>
       <div className="grid grid-cols-3 gap-2 mb-3">
-        {installGroups.map(g => (
+        {installStatusGroups.map(g => (
           <div key={g.label} className="text-center bg-muted/50 rounded-lg p-2">
-            <p className={`text-base font-bold ${g.cls === "status-open" ? "text-blue-600" : g.cls === "status-in-progress" ? "text-amber-600" : "text-gray-500"}`}>{g.count}</p>
+            <p className={`text-base font-bold ${
+              g.cls === "status-open" ? "text-blue-600"
+              : g.cls === "status-in-progress" ? "text-amber-600"
+              : "text-red-600"
+            }`}>{g.count}</p>
             <p className="text-[9px] text-muted-foreground leading-tight">{g.label}</p>
           </div>
         ))}
       </div>
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Products Pending Installation</p>
-        {installItems.slice(0, 4).map(item => (
-          <div key={item.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-foreground truncate">{item.name}</p>
-              <p className="text-[10px] text-muted-foreground">Serial: {item.serialNumber}</p>
-            </div>
-            <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
-              item.installationNotByUs ? "status-closed" : item.installationRequested ? "status-in-progress" : "status-open"
-            }`}>
-              {item.installationNotByUs ? "Not Ours" : item.installationRequested ? "Requested" : "Pending"}
-            </span>
-          </div>
-        ))}
-      </div>
+      {openInstallTickets.length === 0 ? (
+        <p className="text-xs text-muted-foreground text-center py-3">No open installation requests</p>
+      ) : (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Installation Tickets</p>
+          {openInstallTickets.map(t => (
+            <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-primary">{t.id}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{t.customerName ?? "—"} · {t.subcategory}</p>
+              </div>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
+                t.status === "Open" ? "status-open" : t.status === "In Progress" ? "status-in-progress" : "status-awaiting"
+              }`}>{t.status}</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </DetailPanel>
   );
 }
