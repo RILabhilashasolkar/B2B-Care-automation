@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { mockOrders, type OrderItem, type ServiceOrderStatus } from "../lib/mockData";
-import { ArrowLeft, Package, ChevronRight, Truck, MessageCircle, Wrench, X } from "lucide-react";
+import { ArrowLeft, Package, ChevronRight, Truck, MessageCircle, Wrench, X, Ban, Phone, Ticket } from "lucide-react";
 import { useState } from "react";
 
 const statusColor: Record<ServiceOrderStatus, string> = {
@@ -108,17 +108,41 @@ function CreateInstallationModal({ item, orderId, onClose, onSubmit }: { item: O
 export default function OrderDetailPage() {
   const { orderId } = useParams();
   const order = mockOrders.find((o) => o.id === orderId);
-  const [installItem, setInstallItem] = useState<OrderItem | null>(null);
-  const [installRequests, setInstallRequests] = useState<Record<string, { customerName: string; mobile: string }>>({});
+  const [installItem,      setInstallItem]      = useState<OrderItem | null>(null);
+  const [installRequests,  setInstallRequests]  = useState<Record<string, { customerName: string; mobile: string }>>({});
+  const [serviceLinkItemId, setServiceLinkItemId] = useState<string | null>(null);
+  const [notDoneItemId,    setNotDoneItemId]    = useState<string | null>(null);
+  const [modalMobile,      setModalMobile]      = useState("");
+  const [modalMobileError, setModalMobileError] = useState("");
+  const [serviceLinksSent, setServiceLinksSent] = useState<Record<string, string>>({});   // itemId → mobile
+  const [notDoneItems,     setNotDoneItems]     = useState<Record<string, boolean>>({});  // itemId → bool
   const navigate = useNavigate();
 
   if (!order) return <div className="text-center py-20 text-muted-foreground">Order not found</div>;
+
+  const validateMobile = (m: string) => /^[6-9]\d{9}$/.test(m);
 
   const handleInstallRequest = (itemId: string, data: InstallFormData) => {
     setInstallRequests((prev) => ({ ...prev, [itemId]: { customerName: data.customerName, mobile: data.mobile } }));
     setInstallItem(null);
     alert(`✅ Installation request created for ${data.customerName} (+91${data.mobile}). Ticket: TKT-INST-${Date.now().toString().slice(-4)}`);
   };
+
+  const handleSendServiceLink = () => {
+    if (!validateMobile(modalMobile)) { setModalMobileError("Enter a valid 10-digit Indian mobile number"); return; }
+    setServiceLinksSent((prev) => ({ ...prev, [serviceLinkItemId!]: modalMobile }));
+    alert(`✅ Service link sent via WhatsApp/SMS to +91${modalMobile}`);
+    setServiceLinkItemId(null); setModalMobile(""); setModalMobileError("");
+  };
+
+  const handleNotDone = () => {
+    if (!validateMobile(modalMobile)) { setModalMobileError("Enter a valid 10-digit Indian mobile number"); return; }
+    setNotDoneItems((prev) => ({ ...prev, [notDoneItemId!]: true }));
+    alert(`Tagged as "Installation Not Done by Us" for +91${modalMobile}`);
+    setNotDoneItemId(null); setModalMobile(""); setModalMobileError("");
+  };
+
+  const closeModal = () => { setServiceLinkItemId(null); setNotDoneItemId(null); setModalMobile(""); setModalMobileError(""); };
 
   return (
     <div className="space-y-3 animate-fade-in">
@@ -184,16 +208,22 @@ export default function OrderDetailPage() {
                 const isInstallCreated = installRequests[item.id] || item.installationRequested;
                 const so = item.serviceOrder;
 
+                const isNotDone   = item.installationNotByUs || notDoneItems[item.id];
+                const linkSent    = serviceLinksSent[item.id];
+                const showInstall = item.installationEligible && !isInstallCreated && !isNotDone && shipment.status === "Delivered";
+                const showLink    = !item.customerMobile && !linkSent && !isInstallCreated;
+                const showNotDone = item.installationEligible && !isInstallCreated && !isNotDone;
+
                 return (
-                  <div key={item.id} className="px-5 py-4 space-y-3">
+                  <div key={item.id} className="px-4 py-4 space-y-3">
                     {/* Item row */}
                     <Link
                       to={`/orders/${order.id}/item/${item.id}`}
                       className="flex items-center justify-between hover:opacity-80 transition-opacity group"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
-                          <Package className="w-6 h-6 text-muted-foreground" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{item.name}</p>
@@ -202,57 +232,82 @@ export default function OrderDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <p className="text-sm font-semibold text-foreground">₹{item.price.toLocaleString("en-IN")}</p>
                         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
                       </div>
                     </Link>
 
-                    {/* Unified consolidated view */}
-                    <div className="ml-16 space-y-2">
-                      {/* Tags row */}
-                      <div className="flex flex-wrap gap-2">
-                        {item.installationEligible && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                            isInstallCreated ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]" : "bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]"
-                          }`}>
-                            {isInstallCreated ? "✓ Installation Requested" : "Installation Eligible"}
-                          </span>
-                        )}
-                        {(item.installationNotByUs) && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
-                            Installation: Not by JMD
-                          </span>
-                        )}
-                        {so && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor[so.status]}`}>
-                            SO: {so.id} — {so.status}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Install request info */}
+                    {/* Status tags */}
+                    <div className="flex flex-wrap gap-1.5 ml-14">
+                      {item.installationEligible && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          isInstallCreated
+                            ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]"
+                            : "bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]"
+                        }`}>
+                          {isInstallCreated ? "✓ Installation Requested" : "Installation Eligible"}
+                        </span>
+                      )}
+                      {isNotDone && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-destructive/10 text-destructive">
+                          ✗ Not Done by JMD
+                        </span>
+                      )}
+                      {linkSent && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">
+                          ✓ Service Link Sent (+91{linkSent})
+                        </span>
+                      )}
+                      {so && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor[so.status]}`}>
+                          SO: {so.id} — {so.status}
+                        </span>
+                      )}
                       {installRequests[item.id] && (
-                        <p className="text-xs text-muted-foreground">
-                          🔧 Install for: {installRequests[item.id].customerName} · +91{installRequests[item.id].mobile}
-                        </p>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                          🔧 {installRequests[item.id].customerName} · +91{installRequests[item.id].mobile}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* ── Quick Action Buttons ── */}
+                    <div className="ml-14 space-y-1.5">
+                      {/* Raise Installation Request — primary blue, full width */}
+                      {showInstall && (
+                        <button
+                          onClick={() => setInstallItem(item)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
+                        >
+                          <Wrench className="w-3.5 h-3.5" /> Raise Installation Request
+                        </button>
                       )}
 
-                      {/* Action buttons */}
-                      <div className="flex flex-wrap gap-2">
-                        {shipment.status === "Delivered" && !isInstallCreated && (
+                      {/* Send Service Link — green, full width */}
+                      {showLink && (
+                        <button
+                          onClick={() => { setServiceLinkItemId(item.id); setModalMobile(""); setModalMobileError(""); }}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20 rounded-xl text-xs font-semibold hover:bg-[hsl(var(--success))]/20 transition-colors"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" /> Send Service Link
+                        </button>
+                      )}
+
+                      {/* Not Done by Us + Create Ticket — side by side */}
+                      <div className="flex gap-1.5">
+                        {showNotDone && (
                           <button
-                            onClick={() => setInstallItem(item)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
+                            onClick={() => { setNotDoneItemId(item.id); setModalMobile(""); setModalMobileError(""); }}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-xs font-semibold hover:bg-destructive/20 transition-colors"
                           >
-                            <Wrench className="w-3.5 h-3.5" /> Create SO
+                            <Ban className="w-3.5 h-3.5" /> Not Done by Us
                           </button>
                         )}
                         <button
                           onClick={() => navigate(`/ticket/create?orderId=${order.id}&itemId=${item.id}&shipmentId=${shipment.id}`)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-foreground border border-border rounded-lg text-xs font-medium hover:bg-accent/80 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-card text-foreground border border-border rounded-xl text-xs font-semibold hover:bg-accent transition-colors"
                         >
-                          <MessageCircle className="w-3.5 h-3.5" /> Raise Ticket
+                          <Ticket className="w-3.5 h-3.5" /> Create Ticket
                         </button>
                       </div>
                     </div>
@@ -265,7 +320,7 @@ export default function OrderDetailPage() {
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Installation Modal */}
       {installItem && (
         <CreateInstallationModal
           item={installItem}
@@ -273,6 +328,67 @@ export default function OrderDetailPage() {
           onClose={() => setInstallItem(null)}
           onSubmit={(data) => handleInstallRequest(installItem.id, data)}
         />
+      )}
+
+      {/* Send Service Link Modal */}
+      {serviceLinkItemId && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeModal}>
+          <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-foreground">Send Service Link</h3>
+              <button onClick={closeModal} className="p-1 hover:bg-accent rounded-lg"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Send a WhatsApp/SMS link so the customer can self-register their product.</p>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Customer Mobile *</label>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-muted-foreground font-medium">+91</span>
+              <input
+                value={modalMobile}
+                onChange={(e) => { setModalMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setModalMobileError(""); }}
+                className="flex-1 px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="10-digit mobile"
+              />
+            </div>
+            {modalMobileError && <p className="text-xs text-destructive mb-3">{modalMobileError}</p>}
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleSendServiceLink} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold">
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+              </button>
+              <button onClick={handleSendServiceLink} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold">
+                <Phone className="w-3.5 h-3.5" /> SMS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Not Done by Us Modal */}
+      {notDoneItemId && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeModal}>
+          <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-foreground">Installation Not Done by Us</h3>
+              <button onClick={closeModal} className="p-1 hover:bg-accent rounded-lg"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Tag this item as installed by a third party and capture customer contact.</p>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Customer Mobile *</label>
+            <input
+              value={modalMobile}
+              onChange={(e) => { setModalMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setModalMobileError(""); }}
+              className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring mb-1"
+              placeholder="10-digit mobile"
+            />
+            {modalMobileError && <p className="text-xs text-destructive mb-3">{modalMobileError}</p>}
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleNotDone} className="flex-1 py-2.5 bg-destructive text-destructive-foreground rounded-xl text-xs font-bold">
+                Confirm &amp; Tag
+              </button>
+              <button onClick={closeModal} className="px-4 py-2.5 bg-card border border-border text-foreground rounded-xl text-xs font-semibold">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
