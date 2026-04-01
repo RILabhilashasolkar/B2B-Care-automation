@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Search, X, SlidersHorizontal, Package,
-  Wrench, Phone, CheckCircle, Calendar, MessageCircle,
+  Wrench, Phone, CheckCircle, Calendar, MessageCircle, ChevronDown,
 } from "lucide-react";
 import {
   mockOrders,
@@ -26,36 +26,25 @@ interface InstallFormData {
   notes: string;
 }
 
-type DateRangeOption = "7" | "30" | "90" | "all";
-
 interface InstallFilters {
-  brands: string[];
-  productFamilies: string[];
-  productDetails: string[];
-  dateRange: DateRangeOption;
+  brand: string;
+  productFamily: string;
+  productDetail: string;
+  dateFrom: string;
+  dateTo: string;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const EMPTY_FILTERS: InstallFilters = {
-  brands: [],
-  productFamilies: [],
-  productDetails: [],
-  dateRange: "all",
+  brand: "",
+  productFamily: "",
+  productDetail: "",
+  dateFrom: "",
+  dateTo: "",
 };
 
-const AC_DETAIL_CHIPS = ["1 Ton", "1.5 Ton", "2 Ton", "Split AC", "Window AC"];
-
-const DATE_RANGE_OPTIONS: Array<{ value: DateRangeOption; label: string }> = [
-  { value: "7",   label: "Last 7 days"  },
-  { value: "30",  label: "Last 30 days" },
-  { value: "90",  label: "Last 90 days" },
-  { value: "all", label: "All time"     },
-];
-
-// ── Toggle chip helper ────────────────────────────────────────────────────────
-function toggleChip<T extends string>(arr: T[], value: T): T[] {
-  return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
-}
+// Product detail options — only relevant for Air Conditioner
+const AC_PRODUCT_DETAILS = ["1 Ton", "1.5 Ton", "2 Ton", "Split AC", "Window AC"];
 
 // ── CreateInstallationModal ───────────────────────────────────────────────────
 function CreateInstallationModal({
@@ -346,17 +335,19 @@ export default function HelpInstallationPage() {
       )
   );
 
-  // ── Derived filter options (from pool) ────────────────────────────────────
+  // ── Derived filter options (cascading: brand → family → detail) ─────────────
   const availableBrands = [...new Set(productPool.map((p) => p.item.brand))];
-  const availableFamilies = [...new Set(productPool.map((p) => p.item.productFamily))];
 
-  const showAcDetails =
-    draft.productFamilies.length === 0 ||
-    draft.productFamilies.includes("Air Conditioner");
+  // Product Family options depend on selected brand in draft
+  const availableFamilies = [...new Set(
+    (draft.brand
+      ? productPool.filter((p) => p.item.brand === draft.brand)
+      : productPool
+    ).map((p) => p.item.productFamily)
+  )];
 
-  const showAcDetailsApplied =
-    applied.productFamilies.length === 0 ||
-    applied.productFamilies.includes("Air Conditioner");
+  // Product Detail dropdown only shown when Air Conditioner is selected
+  const showProductDetail = draft.productFamily === "Air Conditioner";
 
   // ── Filter logic ──────────────────────────────────────────────────────────
   const searchTrimmed = search.trim().toLowerCase();
@@ -373,45 +364,37 @@ export default function HelpInstallationPage() {
     }
 
     // Brand filter
-    if (applied.brands.length > 0 && !applied.brands.includes(p.item.brand)) return false;
+    if (applied.brand && p.item.brand !== applied.brand) return false;
 
     // Family filter
-    if (applied.productFamilies.length > 0 && !applied.productFamilies.includes(p.item.productFamily))
-      return false;
+    if (applied.productFamily && p.item.productFamily !== applied.productFamily) return false;
 
-    // Product detail (AC sub-filter)
-    if (applied.productDetails.length > 0) {
+    // Product detail filter (AC sub-filter)
+    if (applied.productDetail && applied.productFamily === "Air Conditioner") {
       const nameLower = p.item.name.toLowerCase();
-      const detailMatch = applied.productDetails.some((detail) => {
-        switch (detail) {
-          case "1 Ton":    return nameLower.includes("1 ton") && !nameLower.includes("1.5");
-          case "1.5 Ton":  return nameLower.includes("1.5 ton");
-          case "2 Ton":    return nameLower.includes("2 ton");
-          case "Split AC": return nameLower.includes("split");
-          case "Window AC":return nameLower.includes("window");
-          default:         return false;
-        }
-      });
-      if (!detailMatch) return false;
+      let match = false;
+      switch (applied.productDetail) {
+        case "1 Ton":    match = nameLower.includes("1 ton") && !nameLower.includes("1.5"); break;
+        case "1.5 Ton":  match = nameLower.includes("1.5 ton"); break;
+        case "2 Ton":    match = nameLower.includes("2 ton"); break;
+        case "Split AC": match = nameLower.includes("split"); break;
+        case "Window AC":match = nameLower.includes("window"); break;
+      }
+      if (!match) return false;
     }
 
-    // Date range filter
-    if (applied.dateRange !== "all") {
-      const days = parseInt(applied.dateRange, 10);
-      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-      const deliveryDate = new Date(p.shipment.deliveryDate);
-      if (deliveryDate < cutoff) return false;
-    }
+    // Delivery date range filter
+    if (applied.dateFrom && new Date(p.shipment.deliveryDate) < new Date(applied.dateFrom)) return false;
+    if (applied.dateTo   && new Date(p.shipment.deliveryDate) > new Date(applied.dateTo))   return false;
 
     return true;
   });
 
   // ── Active filter count ───────────────────────────────────────────────────
-  const activeFilterCount =
-    applied.brands.length +
-    applied.productFamilies.length +
-    applied.productDetails.length +
-    (applied.dateRange !== "all" ? 1 : 0);
+  const activeFilterCount = [
+    applied.brand, applied.productFamily, applied.productDetail,
+    applied.dateFrom, applied.dateTo,
+  ].filter(Boolean).length;
 
   // ── Modal resolution ──────────────────────────────────────────────────────
   const modalPoolItem = modalItemId
@@ -519,41 +502,44 @@ export default function HelpInstallationPage() {
       {/* Active filter chips */}
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {applied.brands.map((b) => (
+          {applied.brand && (
             <button
-              key={b}
-              onClick={() => setApplied((prev) => ({ ...prev, brands: prev.brands.filter((v) => v !== b) }))}
+              onClick={() => setApplied((prev) => ({ ...prev, brand: "", productFamily: "", productDetail: "" }))}
               className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full"
             >
-              {b} <X className="w-2.5 h-2.5" />
+              Brand: {applied.brand} <X className="w-2.5 h-2.5" />
             </button>
-          ))}
-          {applied.productFamilies.map((f) => (
+          )}
+          {applied.productFamily && (
             <button
-              key={f}
-              onClick={() => setApplied((prev) => ({ ...prev, productFamilies: prev.productFamilies.filter((v) => v !== f) }))}
+              onClick={() => setApplied((prev) => ({ ...prev, productFamily: "", productDetail: "" }))}
               className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full"
             >
-              {f} <X className="w-2.5 h-2.5" />
+              {applied.productFamily} <X className="w-2.5 h-2.5" />
             </button>
-          ))}
-          {applied.productDetails.map((d) => (
+          )}
+          {applied.productDetail && (
             <button
-              key={d}
-              onClick={() => setApplied((prev) => ({ ...prev, productDetails: prev.productDetails.filter((v) => v !== d) }))}
+              onClick={() => setApplied((prev) => ({ ...prev, productDetail: "" }))}
               className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full"
             >
-              {d} <X className="w-2.5 h-2.5" />
+              {applied.productDetail} <X className="w-2.5 h-2.5" />
             </button>
-          ))}
-          {applied.dateRange !== "all" && (
+          )}
+          {applied.dateFrom && (
             <button
-              onClick={() => setApplied((prev) => ({ ...prev, dateRange: "all" }))}
+              onClick={() => setApplied((prev) => ({ ...prev, dateFrom: "" }))}
               className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full"
             >
-              <Calendar className="w-2.5 h-2.5" />
-              {DATE_RANGE_OPTIONS.find((o) => o.value === applied.dateRange)?.label}
-              <X className="w-2.5 h-2.5" />
+              <Calendar className="w-2.5 h-2.5" /> From: {applied.dateFrom} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {applied.dateTo && (
+            <button
+              onClick={() => setApplied((prev) => ({ ...prev, dateTo: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full"
+            >
+              <Calendar className="w-2.5 h-2.5" /> To: {applied.dateTo} <X className="w-2.5 h-2.5" />
             </button>
           )}
           <button
@@ -577,7 +563,7 @@ export default function HelpInstallationPage() {
           <Package className="w-12 h-12 text-muted-foreground/30 mb-3" />
           <p className="text-sm font-semibold text-foreground">No products found</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {applied.dateRange !== "all"
+            {(applied.dateFrom || applied.dateTo)
               ? "Try a wider date range — mock deliveries are from Dec 2024"
               : "Adjust your search or filters"}
           </p>
@@ -739,120 +725,120 @@ export default function HelpInstallationPage() {
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-              <p className="text-sm font-bold text-foreground">Filters</p>
+            <div className="flex items-start justify-between px-5 py-3 border-b border-border">
+              <div>
+                <p className="text-sm font-bold text-foreground">Filter Products</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Filter across delivered eligible items</p>
+              </div>
               <button
                 onClick={() => setShowFilterSheet(false)}
-                className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+                className="p-1.5 rounded-full bg-muted hover:bg-accent transition-colors"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
 
             {/* Filter content */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
-              {/* Brand */}
-              <div>
-                <p className="text-xs font-bold text-foreground mb-2">Brand</p>
-                <div className="flex flex-wrap gap-2">
-                  {availableBrands.map((brand) => (
-                    <button
-                      key={brand}
-                      onClick={() => setDraft((prev) => ({ ...prev, brands: toggleChip(prev.brands, brand) }))}
-                      className={`px-3 py-1.5 rounded-full border text-[11px] font-semibold transition-all ${
-                        draft.brands.includes(brand)
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card text-foreground border-border hover:border-primary/30"
-                      }`}
-                    >
-                      {brand}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Product Family */}
-              <div>
-                <p className="text-xs font-bold text-foreground mb-2">Product Family</p>
-                <div className="flex flex-wrap gap-2">
-                  {availableFamilies.map((family) => (
-                    <button
-                      key={family}
-                      onClick={() => setDraft((prev) => ({ ...prev, productFamilies: toggleChip(prev.productFamilies, family) }))}
-                      className={`px-3 py-1.5 rounded-full border text-[11px] font-semibold transition-all ${
-                        draft.productFamilies.includes(family)
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card text-foreground border-border hover:border-primary/30"
-                      }`}
-                    >
-                      {family}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Product Details (AC sub-filter) */}
-              {showAcDetails && (
+              {/* Row 1: Delivery Date Range */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs font-bold text-foreground mb-1">
-                    AC Product Details
-                    <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">
-                      (Air Conditioner sub-filter)
-                    </span>
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {AC_DETAIL_CHIPS.map((chip) => (
-                      <button
-                        key={chip}
-                        onClick={() => setDraft((prev) => ({ ...prev, productDetails: toggleChip(prev.productDetails, chip) }))}
-                        className={`px-3 py-1.5 rounded-full border text-[11px] font-semibold transition-all ${
-                          draft.productDetails.includes(chip)
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card text-foreground border-border hover:border-primary/30"
-                        }`}
-                      >
-                        {chip}
-                      </button>
-                    ))}
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5">
+                    From Date
+                  </label>
+                  <input
+                    type="date"
+                    value={draft.dateFrom}
+                    onChange={(e) => setDraft({ ...draft, dateFrom: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5">
+                    To Date
+                  </label>
+                  <input
+                    type="date"
+                    value={draft.dateTo}
+                    onChange={(e) => setDraft({ ...draft, dateTo: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Brand */}
+              <div>
+                <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5">
+                  Brand
+                </label>
+                <div className="relative">
+                  <select
+                    value={draft.brand}
+                    onChange={(e) => setDraft({ ...draft, brand: e.target.value, productFamily: "", productDetail: "" })}
+                    className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors appearance-none pr-7"
+                  >
+                    <option value="">All Brands</option>
+                    {availableBrands.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Row 3: Product Family (options depend on brand) */}
+              <div>
+                <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5">
+                  Product Family
+                  {draft.brand && <span className="ml-1 font-normal text-primary/70">({draft.brand})</span>}
+                </label>
+                <div className="relative">
+                  <select
+                    value={draft.productFamily}
+                    onChange={(e) => setDraft({ ...draft, productFamily: e.target.value, productDetail: "" })}
+                    className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors appearance-none pr-7"
+                  >
+                    <option value="">All Families</option>
+                    {availableFamilies.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Row 4: Product Details (only for Air Conditioner) */}
+              {showProductDetail && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5">
+                    Product Details
+                    <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">(AC sub-filter)</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={draft.productDetail}
+                      onChange={(e) => setDraft({ ...draft, productDetail: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors appearance-none pr-7"
+                    >
+                      <option value="">All Details</option>
+                      {AC_PRODUCT_DETAILS.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   </div>
                 </div>
               )}
-
-              {/* Date Range */}
-              <div>
-                <p className="text-xs font-bold text-foreground mb-2">Delivery Date Range</p>
-                <div className="flex flex-wrap gap-2">
-                  {DATE_RANGE_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setDraft((prev) => ({ ...prev, dateRange: opt.value }))}
-                      className={`px-3 py-1.5 rounded-full border text-[11px] font-semibold transition-all ${
-                        draft.dateRange === opt.value
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card text-foreground border-border hover:border-primary/30"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Footer */}
-            <div className="flex gap-2 px-5 py-4 border-t border-border">
+            <div className="flex items-center gap-3 px-5 py-4 border-t border-border flex-shrink-0">
               <button
-                onClick={clearFilters}
-                className="flex-1 py-2.5 bg-card border border-border rounded-xl text-xs font-semibold text-foreground"
+                onClick={() => setDraft(EMPTY_FILTERS)}
+                className="flex-1 py-3 rounded-xl border border-border text-xs font-bold text-foreground bg-background active:bg-muted transition-colors"
               >
                 Clear All
               </button>
               <button
                 onClick={applyFilters}
-                className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold"
+                className="flex-2 flex-grow-[2] py-3 rounded-xl bg-primary text-white text-xs font-bold active:opacity-90 transition-opacity"
               >
-                Apply Filters
+                Apply Filters{activeFilterCount > 0 ? ` (${[draft.brand, draft.productFamily, draft.productDetail, draft.dateFrom, draft.dateTo].filter(Boolean).length})` : ""}
               </button>
             </div>
           </div>
