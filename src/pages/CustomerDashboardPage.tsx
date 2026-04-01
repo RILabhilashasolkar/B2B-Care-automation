@@ -39,7 +39,7 @@ export default function CustomerDashboardPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Raise and track service requests on behalf of your customers</p>
         </div>
         <button
-          onClick={() => navigate("/service/customer/create")}
+          onClick={() => navigate("/orders")}
           className="flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-semibold"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -123,7 +123,7 @@ export default function CustomerDashboardPage() {
           <div className="mt-4 bg-accent/50 rounded-lg p-4 text-center">
             <p className="text-sm text-muted-foreground">No customer found. The customer record will be created when you raise an installation request.</p>
             <button
-              onClick={() => navigate("/service/customer/create")}
+              onClick={() => navigate("/orders")}
               className="mt-2 text-sm text-primary font-medium hover:underline"
             >
               + Create New Customer Ticket

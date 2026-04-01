@@ -192,7 +192,7 @@ export default function FaqPage() {
             <p className="text-sm font-semibold text-foreground">No results found</p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">Try different keywords or raise a support ticket</p>
             <Link
-              to="/service/self/create"
+              to="/orders"
               className="inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full"
             >
               <TicketCheck className="w-4 h-4" />
@@ -267,7 +267,7 @@ export default function FaqPage() {
                               Raise a support ticket and our team will help you.
                             </p>
                             <Link
-                              to="/service/self/create"
+                              to="/orders"
                               className="inline-flex items-center gap-1.5 bg-primary text-white text-[11px] font-bold px-3 py-1.5 rounded-full"
                             >
                               <TicketCheck className="w-3 h-3" />
@@ -291,7 +291,7 @@ export default function FaqPage() {
         <p className="text-white/70 text-xs mb-3">Our support team is here to help</p>
         <div className="flex gap-2">
           <Link
-            to="/service/self/create"
+            to="/orders"
             className="flex-1 flex items-center justify-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
           >
             <TicketCheck className="w-3.5 h-3.5" />

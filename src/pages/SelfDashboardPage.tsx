@@ -27,7 +27,7 @@ export default function SelfDashboardPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Your purchase & billing complaints</p>
         </div>
         <button
-          onClick={() => navigate("/service/self/create")}
+          onClick={() => navigate("/orders")}
           className="flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-semibold active:opacity-80 transition-opacity"
         >
           <Plus className="w-3.5 h-3.5" />

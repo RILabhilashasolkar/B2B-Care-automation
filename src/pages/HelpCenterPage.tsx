@@ -15,14 +15,14 @@ const QUICK_ACTIONS = [
 ];
 
 const CATEGORIES = [
-  { label: "Demo & Installation", count: 2113, icon: Zap, bg: "bg-blue-50", color: "text-blue-600", path: "/service/customer/create" },
-  { label: "Repair & Service", count: 1045, icon: Wrench, bg: "bg-orange-50", color: "text-orange-600", path: "/service/customer/create" },
-  { label: "Delivery Issues", count: 83, icon: Truck, bg: "bg-green-50", color: "text-green-600", path: "/service/self/create" },
-  { label: "Billing & Invoices", count: 284, icon: FileText, bg: "bg-amber-50", color: "text-amber-600", path: "/service/self/create" },
-  { label: "Refunds & Returns", count: 284, icon: RotateCcw, bg: "bg-red-50", color: "text-red-600", path: "/service/self/create" },
-  { label: "Store Related", count: 20, icon: Store, bg: "bg-teal-50", color: "text-teal-600", path: "/service/self/create" },
+  { label: "Demo & Installation", count: 2113, icon: Zap, bg: "bg-blue-50", color: "text-blue-600", path: "/orders" },
+  { label: "Repair & Service", count: 1045, icon: Wrench, bg: "bg-orange-50", color: "text-orange-600", path: "/orders" },
+  { label: "Delivery Issues", count: 83, icon: Truck, bg: "bg-green-50", color: "text-green-600", path: "/orders" },
+  { label: "Billing & Invoices", count: 284, icon: FileText, bg: "bg-amber-50", color: "text-amber-600", path: "/orders" },
+  { label: "Refunds & Returns", count: 284, icon: RotateCcw, bg: "bg-red-50", color: "text-red-600", path: "/orders" },
+  { label: "Store Related", count: 20, icon: Store, bg: "bg-teal-50", color: "text-teal-600", path: "/orders" },
   { label: "SO Follow-up", count: 94, icon: Search, bg: "bg-violet-50", color: "text-violet-600", path: "/service/customer" },
-  { label: "Other Issues", count: 115, icon: HelpCircle, bg: "bg-gray-50", color: "text-gray-500", path: "/service/self/create" },
+  { label: "Other Issues", count: 115, icon: HelpCircle, bg: "bg-gray-50", color: "text-gray-500", path: "/orders" },
 ];
 
 const TOP_FAQ = [
@@ -42,7 +42,7 @@ export default function HelpCenterPage() {
         <h1 className="text-xl font-bold mb-1">How can we help you?</h1>
         <p className="text-sm text-white/80 mb-4">JMD B2B Service & Care Hub</p>
         <Link
-          to="/service/self/create"
+          to="/orders"
           className="inline-flex items-center gap-2 bg-white text-primary text-sm font-bold px-5 py-2.5 rounded-full shadow hover:opacity-90 transition-opacity"
         >
           <TicketCheck className="w-4 h-4" />
@@ -94,7 +94,7 @@ export default function HelpCenterPage() {
       {/* Browse by Issue Type */}
       <div className="px-4 pt-3 pb-1 flex items-center justify-between">
         <h2 className="text-sm font-bold text-foreground">Browse by Issue Type</h2>
-        <Link to="/service/self/create" className="text-xs text-primary font-semibold">View All</Link>
+        <Link to="/orders" className="text-xs text-primary font-semibold">View All</Link>
       </div>
       <div className="px-4 grid grid-cols-2 gap-2.5 pb-2">
         {CATEGORIES.map((cat) => (
