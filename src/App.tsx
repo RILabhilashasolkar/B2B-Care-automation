@@ -14,6 +14,7 @@ import CustomerProfilePage from "./pages/CustomerProfilePage";
 import CreateTicketPage from "./pages/CreateTicketPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
+import SmartCreateTicketPage from "./pages/SmartCreateTicketPage";
 import FaqPage from "./pages/FaqPage";
 import LiveChatPage from "./pages/LiveChatPage";
 import MyBusinessPage from "./pages/MyBusinessPage";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/service/customer" element={<CustomerDashboardPage />} />
             <Route path="/service/customer/create" element={<CreateTicketPage type="customer" />} />
             <Route path="/service/customer/:customerId" element={<CustomerProfilePage />} />
+            <Route path="/ticket/create" element={<SmartCreateTicketPage />} />
             <Route path="/ticket/:ticketId" element={<TicketDetailPage />} />
             <Route path="/service/lookup" element={<CustomerDashboardPage />} />
             <Route path="*" element={<HomePage />} />

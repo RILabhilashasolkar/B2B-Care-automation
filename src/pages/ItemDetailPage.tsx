@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { mockOrders, type ServiceOrderStatus } from "../lib/mockData";
-import { ArrowLeft, Package, Wrench, AlertTriangle, MessageCircle, Phone, Ban, X } from "lucide-react";
+import { ArrowLeft, Package, Wrench, Ticket, MessageCircle, Phone, Ban, X } from "lucide-react";
 import { useState } from "react";
 
 const statusColor: Record<ServiceOrderStatus, string> = {
@@ -15,8 +15,9 @@ const statusSteps: ServiceOrderStatus[] = ["Open", "Engineer Visit Pending", "En
 export default function ItemDetailPage() {
   const { orderId, itemId } = useParams();
   const navigate = useNavigate();
-  const order = mockOrders.find((o) => o.id === orderId);
-  const item = order?.shipments.flatMap((s) => s.items).find((i) => i.id === itemId);
+  const order    = mockOrders.find((o) => o.id === orderId);
+  const shipment = order?.shipments.find((s) => s.items.some((i) => i.id === itemId));
+  const item     = shipment?.items.find((i) => i.id === itemId);
   const [showInstallForm, setShowInstallForm] = useState(false);
   const [showServiceLink, setShowServiceLink] = useState(false);
   const [showNotDone, setShowNotDone] = useState(false);
@@ -176,11 +177,11 @@ export default function ItemDetailPage() {
           </button>
         )}
         <button
-          onClick={() => navigate(`/service/self/create?orderId=${orderId}&itemId=${itemId}`)}
+          onClick={() => navigate(`/ticket/create?orderId=${orderId}&itemId=${itemId}&shipmentId=${shipment?.id ?? ""}`)}
           className="flex items-center gap-2 px-5 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors"
         >
-          <AlertTriangle className="w-4 h-4" />
-          Report Issue
+          <Ticket className="w-4 h-4" />
+          Create Ticket
         </button>
       </div>
 

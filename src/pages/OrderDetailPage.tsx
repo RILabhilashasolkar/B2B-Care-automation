@@ -249,7 +249,7 @@ export default function OrderDetailPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => navigate(`/service/self/create?orderId=${order.id}`)}
+                          onClick={() => navigate(`/ticket/create?orderId=${order.id}&itemId=${item.id}&shipmentId=${shipment.id}`)}
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-foreground border border-border rounded-lg text-xs font-medium hover:bg-accent/80 transition-colors"
                         >
                           <MessageCircle className="w-3.5 h-3.5" /> Raise Ticket
