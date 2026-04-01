@@ -301,7 +301,7 @@ export default function FaqPage() {
             to="/chat"
             className="flex-1 flex items-center justify-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-2 rounded-full border border-white/30"
           >
-            Live Call
+            Chat
           </Link>
         </div>
       </div>
