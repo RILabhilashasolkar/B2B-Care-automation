@@ -23,6 +23,7 @@ export default function SmartCreateTicketPage() {
   const shipmentId = searchParams.get("shipmentId") || "";
   const customerId = searchParams.get("customerId") || "";
   const actionType = searchParams.get("actionType") || "";
+  const level      = searchParams.get("level")      || "";  // "order" | "shipment" | ""
 
   // ── Entry mode ────────────────────────────────────────────────────────────
   // "item"     → came from OrderDetailPage / ItemDetailPage with orderId+itemId+shipmentId
@@ -98,6 +99,15 @@ export default function SmartCreateTicketPage() {
   const categories =
     ticketType === "self" ? ticketCategories.self : ticketCategories.customer;
 
+  // Level-based category filtering (order→ Billing+OrderIssues, shipment→ DeliveryIssues)
+  const LEVEL_CATS: Record<string, string[]> = {
+    order:    ["Order Issues", "Billing & Payments"],
+    shipment: ["Delivery Issues"],
+  };
+  const filteredCategories = LEVEL_CATS[level]
+    ? categories.filter((c) => LEVEL_CATS[level].includes(c.category))
+    : categories;
+
   const suggestedCategory = actionType ? (ACTION_CATEGORY[actionType] ?? "") : "";
 
   // ── Form state ────────────────────────────────────────────────────────────
@@ -139,11 +149,16 @@ export default function SmartCreateTicketPage() {
   // Step 1 readiness: customer mode requires a purchase to be selected
   const step1Ready = entryMode === "customer" ? !!selectedPurchaseId : true;
 
-  // ── Status badge helper ───────────────────────────────────────────────────
+  // ── Status badge helpers ──────────────────────────────────────────────────
   const statusBadge = (s: string) =>
     s === "Delivered"
       ? "bg-emerald-100 text-emerald-700"
       : "bg-blue-100 text-blue-700";
+
+  const orderStatusBadge = (s: string) =>
+    s === "Delivered"   ? "bg-emerald-100 text-emerald-700" :
+    s === "Processing"  ? "bg-orange-100 text-orange-700"   :
+                          "bg-blue-100 text-blue-700";
 
   return (
     <div className="space-y-3 animate-fade-in pb-4">
@@ -470,6 +485,39 @@ export default function SmartCreateTicketPage() {
             </>
           )}
 
+          {/* ── GENERIC MODE with orderId — order / shipment context ── */}
+          {entryMode === "generic" && orderId && order && (
+            <div className="bg-muted/50 border border-border rounded-xl p-4 space-y-2">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                {level === "shipment" ? "Shipment Context" : "Order Context"}
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  {level === "shipment"
+                    ? <Truck className="w-4 h-4 text-primary" />
+                    : <Package className="w-4 h-4 text-primary" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold font-mono">
+                    {level === "shipment" ? (shipment?.id ?? shipmentId) : orderId}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {level === "shipment"
+                      ? `${shipment?.items.length ?? 0} items · ${shipment?.status ?? ""}`
+                      : `${order.shipments.reduce((n, s) => n + s.items.length, 0)} items · ${order.status}`}
+                  </p>
+                </div>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                  level === "shipment"
+                    ? statusBadge(shipment?.status ?? "")
+                    : orderStatusBadge(order.status)
+                }`}>
+                  {level === "shipment" ? shipment?.status : order.status}
+                </span>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={() => setStep(2)}
             disabled={!step1Ready}
@@ -494,7 +542,7 @@ export default function SmartCreateTicketPage() {
           )}
 
           <div className="space-y-2">
-            {categories.map((cat) => (
+            {filteredCategories.map((cat) => (
               <button
                 key={cat.category}
                 onClick={() =>

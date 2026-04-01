@@ -9,13 +9,6 @@ import {
   type Order, type Shipment, type OrderItem,
 } from "../lib/mockData";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface SelfResult {
-  order: Order;
-  shipment: Shipment;
-  item: OrderItem;
-}
-
 type CustomerSearchMode = "mobile" | "serial";
 type TabMode = "self" | "customer";
 
@@ -25,30 +18,33 @@ const shipmentStatusBadge = (status: string) =>
     ? "status-resolved"
     : "status-in-progress";
 
+const orderStatusBadge = (status: string) =>
+  status === "Delivered"  ? "status-resolved" :
+  status === "Processing" ? "status-open"      :
+  "status-in-progress";
+
 // ── Self Tab ──────────────────────────────────────────────────────────────────
 function SelfTab() {
   const navigate = useNavigate();
   const [query, setQuery] = useState<string>("");
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [expandedShipmentId, setExpandedShipmentId] = useState<string | null>(null);
 
   const trimmed = query.trim().toLowerCase();
-  const results: SelfResult[] = [];
 
-  if (trimmed.length >= 3) {
-    for (const order of mockOrders) {
-      for (const shipment of order.shipments) {
-        for (const item of shipment.items) {
-          if (
-            order.id.toLowerCase().includes(trimmed) ||
-            shipment.id.toLowerCase().includes(trimmed) ||
-            item.serialNumber.toLowerCase().includes(trimmed) ||
-            item.name.toLowerCase().includes(trimmed)
-          ) {
-            results.push({ order, shipment, item });
-          }
-        }
-      }
-    }
-  }
+  // Show all orders when no search, filter when query >= 3 chars
+  const filteredOrders = trimmed.length >= 3
+    ? mockOrders.filter((o) =>
+        o.id.toLowerCase().includes(trimmed) ||
+        o.shipments.some((s) =>
+          s.id.toLowerCase().includes(trimmed) ||
+          s.items.some((i) =>
+            i.serialNumber.toLowerCase().includes(trimmed) ||
+            i.name.toLowerCase().includes(trimmed)
+          )
+        )
+      )
+    : mockOrders;
 
   return (
     <div className="space-y-3">
@@ -71,81 +67,160 @@ function SelfTab() {
         )}
       </div>
 
-      {/* Hint or results */}
-      {trimmed.length < 3 ? (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-          <p className="text-xs text-blue-800">
-            Type at least 3 characters to search orders, shipments or serial numbers
-          </p>
-        </div>
-      ) : results.length === 0 ? (
+      {/* Section label */}
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+        {trimmed.length >= 3
+          ? `${filteredOrders.length} order${filteredOrders.length !== 1 ? "s" : ""} found`
+          : "Recent Orders — tap to expand"}
+      </p>
+
+      {/* Empty state */}
+      {filteredOrders.length === 0 && (
         <div className="flex flex-col items-center py-10 text-center">
           <Package className="w-10 h-10 text-muted-foreground/40 mb-3" />
-          <p className="text-sm font-semibold text-foreground">No items found</p>
+          <p className="text-sm font-semibold text-foreground">No orders found</p>
           <p className="text-xs text-muted-foreground mt-1">
             Try a different order ID, shipment ID or serial number
           </p>
         </div>
-      ) : (
-        <>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-            {results.length} result{results.length !== 1 ? "s" : ""}
-          </p>
-          <div className="space-y-2">
-            {results.map((r) => (
-              <button
-                key={`${r.order.id}-${r.item.id}`}
-                onClick={() =>
-                  navigate(
-                    `/ticket/create?orderId=${r.order.id}&itemId=${r.item.id}&shipmentId=${r.shipment.id}`
-                  )
-                }
-                className="w-full text-left bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all active:scale-95"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-4.5 h-4.5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-semibold text-foreground leading-tight flex-1 min-w-0 truncate">
-                        {r.item.name}
-                      </p>
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 flex-shrink-0">
-                        {r.item.brand}
-                      </span>
-                    </div>
-                    <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-                      SN: <span className="font-bold text-foreground">{r.item.serialNumber}</span>
-                    </p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        {r.order.id.slice(0, 12)}…
-                      </span>
-                      <span className="text-muted-foreground text-[10px]">·</span>
-                      <span className="text-[10px] font-mono text-muted-foreground">{r.shipment.id}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <Truck className="w-3 h-3 text-muted-foreground" />
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${shipmentStatusBadge(r.shipment.status)}`}>
-                        {r.shipment.status}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(r.shipment.deliveryDate).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-                </div>
-              </button>
-            ))}
-          </div>
-        </>
       )}
+
+      {/* Orders list */}
+      <div className="space-y-2">
+        {filteredOrders.map((order) => {
+          const isOrderExpanded = expandedOrderId === order.id;
+          const totalItems = order.shipments.reduce((n, s) => n + s.items.length, 0);
+
+          return (
+            <div key={order.id} className="bg-card border border-border rounded-xl overflow-hidden">
+              {/* Order header row */}
+              <button
+                onClick={() => {
+                  setExpandedOrderId(isOrderExpanded ? null : order.id);
+                  setExpandedShipmentId(null);
+                }}
+                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-accent/40 transition-colors"
+              >
+                <Package className="w-4 h-4 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold font-mono">{order.id}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {totalItems} item{totalItems !== 1 ? "s" : ""} ·{" "}
+                    {new Date(order.date).toLocaleDateString("en-IN", {
+                      day: "numeric", month: "short", year: "2-digit",
+                    })}
+                  </p>
+                </div>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${orderStatusBadge(order.status)}`}>
+                  {order.status}
+                </span>
+                <ChevronRight
+                  className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${
+                    isOrderExpanded ? "rotate-90" : ""
+                  }`}
+                />
+              </button>
+
+              {isOrderExpanded && (
+                <div className="border-t border-border">
+                  {/* Order-level ticket CTA */}
+                  <button
+                    onClick={() => navigate(`/ticket/create?orderId=${order.id}&level=order`)}
+                    className="w-full text-left px-4 py-2.5 bg-orange-50 hover:bg-orange-100 flex items-center justify-between gap-2 transition-colors"
+                  >
+                    <span className="text-xs font-semibold text-orange-800">
+                      Create Ticket for this Order
+                    </span>
+                    <span className="text-[9px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200 flex-shrink-0">
+                      Billing · Order Issues
+                    </span>
+                  </button>
+
+                  {/* Shipments */}
+                  {order.shipments.map((shipment) => {
+                    const isShipmentExpanded = expandedShipmentId === shipment.id;
+                    return (
+                      <div key={shipment.id} className="border-t border-border/60">
+                        {/* Shipment row */}
+                        <button
+                          onClick={() =>
+                            setExpandedShipmentId(isShipmentExpanded ? null : shipment.id)
+                          }
+                          className="w-full text-left px-4 py-2.5 flex items-center gap-2 bg-muted/30 hover:bg-muted/60 transition-colors"
+                        >
+                          <Truck className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-mono font-semibold">{shipment.id}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {shipment.items.length} item{shipment.items.length !== 1 ? "s" : ""}
+                            </p>
+                          </div>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${shipmentStatusBadge(shipment.status)}`}>
+                            {shipment.status}
+                          </span>
+                          <ChevronRight
+                            className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${
+                              isShipmentExpanded ? "rotate-90" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {isShipmentExpanded && (
+                          <div className="border-t border-border/40">
+                            {/* Shipment-level ticket CTA */}
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/ticket/create?orderId=${order.id}&shipmentId=${shipment.id}&level=shipment`
+                                )
+                              }
+                              className="w-full text-left px-4 py-2 bg-blue-50 hover:bg-blue-100 flex items-center justify-between gap-2 transition-colors"
+                            >
+                              <span className="text-xs font-semibold text-blue-800">
+                                Create Ticket for this Shipment
+                              </span>
+                              <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 flex-shrink-0">
+                                Delivery Issues
+                              </span>
+                            </button>
+
+                            {/* Items */}
+                            {shipment.items.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() =>
+                                  navigate(
+                                    `/ticket/create?orderId=${order.id}&itemId=${item.id}&shipmentId=${shipment.id}`
+                                  )
+                                }
+                                className="w-full text-left px-4 py-2.5 border-t border-border/40 flex items-center gap-3 hover:bg-accent/30 transition-colors"
+                              >
+                                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Package className="w-3.5 h-3.5 text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-semibold truncate">{item.name}</p>
+                                  <p className="text-[10px] font-mono text-muted-foreground">
+                                    SN: {item.serialNumber}
+                                  </p>
+                                </div>
+                                <span className="text-[9px] bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                  {item.brand}
+                                </span>
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -248,16 +323,8 @@ function CustomerTab() {
         )}
       </div>
 
-      {/* Hint */}
-      {!ready ? (
-        <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
-          <p className="text-xs text-violet-800">
-            {searchMode === "mobile"
-              ? "Enter at least 4 digits of the customer's mobile number"
-              : "Enter at least 4 characters of the serial number"}
-          </p>
-        </div>
-      ) : !hasResults ? (
+      {/* Results / empty states */}
+      {!ready ? null : !hasResults ? (
         <div className="flex flex-col items-center py-10 text-center">
           <User className="w-10 h-10 text-muted-foreground/40 mb-3" />
           <p className="text-sm font-semibold text-foreground">No customers found</p>
@@ -429,7 +496,7 @@ export default function HelpComplaintPage() {
         </Link>
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-bold text-foreground">Create Complaint Ticket</h1>
-          <p className="text-xs text-muted-foreground">Search and raise a complaint</p>
+          <p className="text-xs text-muted-foreground">Browse orders and raise a complaint</p>
         </div>
         <span
           className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 border ${
@@ -457,19 +524,6 @@ export default function HelpComplaintPage() {
             {t === "self" ? "🏪 Self Complaint" : "👤 Customer Complaint"}
           </button>
         ))}
-      </div>
-
-      {/* Info banner */}
-      <div
-        className={`rounded-xl px-3 py-2.5 text-xs border ${
-          activeTab === "self"
-            ? "bg-blue-50 border-blue-200 text-blue-800"
-            : "bg-violet-50 border-violet-200 text-violet-800"
-        }`}
-      >
-        {activeTab === "self"
-          ? "Search for an order item to raise a complaint about delivery, billing or product issues."
-          : "Search for a customer by mobile or serial number to raise a complaint on their behalf."}
       </div>
 
       {/* Tab content */}
