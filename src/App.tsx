@@ -5,7 +5,6 @@ import AppLayout from "./components/AppLayout";
 import PhoneFrame from "./components/PhoneFrame";
 import HomePage from "./pages/HomePage";
 import CategoryPage from "./pages/CategoryPage";
-import DashboardPage from "./pages/DashboardPage";
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import ItemDetailPage from "./pages/ItemDetailPage";
@@ -34,7 +33,7 @@ const App = () => (
             <Route path="/orders/:orderId" element={<OrderDetailPage />} />
             <Route path="/orders/:orderId/item/:itemId" element={<ItemDetailPage />} />
             <Route path="/help" element={<HelpCenterPage />} />
-            <Route path="/help/desk" element={<DashboardPage />} />
+            <Route path="/help/desk" element={<HelpCenterPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/chat" element={<LiveChatPage />} />
             <Route path="/my-business" element={<MyBusinessPage />} />
