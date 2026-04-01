@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Search, X, SlidersHorizontal, Package,
-  Wrench, Phone, CheckCircle, Calendar,
+  Wrench, Phone, CheckCircle, Calendar, MessageCircle,
 } from "lucide-react";
 import {
   mockOrders,
@@ -277,13 +277,16 @@ function ServiceLinkModal({
           <label className="block text-xs font-semibold text-muted-foreground mb-1">
             Customer Mobile *
           </label>
-          <input
-            value={mobile}
-            onChange={(e) => onMobileChange(e.target.value)}
-            placeholder="10-digit mobile"
-            maxLength={10}
-            className={inputCls}
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium flex-shrink-0">+91</span>
+            <input
+              value={mobile}
+              onChange={(e) => onMobileChange(e.target.value.replace(/\D/g, "").slice(0, 10))}
+              placeholder="10-digit mobile"
+              maxLength={10}
+              className={inputCls}
+            />
+          </div>
           {mobileError && (
             <p className="text-[10px] text-red-600 mt-1">{mobileError}</p>
           )}
@@ -293,16 +296,18 @@ function ServiceLinkModal({
           <button
             onClick={onSubmit}
             disabled={!mobile}
-            className="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <Phone className="w-3.5 h-3.5" />
-            Send Link
+            <MessageCircle className="w-3.5 h-3.5" />
+            WhatsApp
           </button>
           <button
-            onClick={onClose}
-            className="px-4 py-2.5 bg-card border border-border rounded-xl text-xs font-semibold text-foreground"
+            onClick={onSubmit}
+            disabled={!mobile}
+            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            Cancel
+            <Phone className="w-3.5 h-3.5" />
+            SMS
           </button>
         </div>
       </div>
