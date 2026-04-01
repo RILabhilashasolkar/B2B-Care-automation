@@ -25,8 +25,9 @@ export default function SmartCreateTicketPage() {
   const actionType     = searchParams.get("actionType")     || "";
   const level          = searchParams.get("level")          || "";  // "order" | "shipment" | ""
   const source         = searchParams.get("source")         || "";  // "help" = came from /help/complaint
-  const relatedTicketId = searchParams.get("relatedTicket") || "";  // related service ticket id (for complaint-against-service)
-  const preCategory    = searchParams.get("category")       || "";  // pre-selected category from URL
+  const relatedTicketId  = searchParams.get("relatedTicket")  || "";  // related service ticket id (for complaint-against-service)
+  const preCategory      = searchParams.get("category")       || "";  // pre-selected category from URL
+  const preSelectSerial  = searchParams.get("preSelectSerial") || ""; // pre-select product by serial in customer mode
 
   // ── Entry mode ────────────────────────────────────────────────────────────
   // "item"     → came from OrderDetailPage / ItemDetailPage with orderId+itemId+shipmentId
@@ -67,7 +68,16 @@ export default function SmartCreateTicketPage() {
     : undefined;
 
   // ── Customer-mode: product picker state ──────────────────────────────────
-  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(null);
+  // Auto-select product when preSelectSerial is provided (e.g. from CustomerProfilePage action)
+  const preSelectedPurchase = preSelectSerial && customerById
+    ? customerById.purchases.find(
+        (p) => p.serialNumber.toLowerCase() === preSelectSerial.toLowerCase()
+      ) ?? null
+    : null;
+
+  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(
+    preSelectedPurchase?.id ?? null
+  );
 
   const selectedPurchase = selectedPurchaseId
     ? customerById?.purchases.find((p) => p.id === selectedPurchaseId)

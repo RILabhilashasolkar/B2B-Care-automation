@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { mockCustomers, mockCustomerTickets, mockOrders } from "../lib/mockData";
+import { mockCustomers, mockCustomerTickets } from "../lib/mockData";
 import {
   ArrowLeft, Package, Clock, Wrench, AlertTriangle,
   MessageSquareWarning, ChevronRight, User, Phone,
@@ -96,23 +96,14 @@ export default function CustomerProfilePage() {
       </p>
 
       {customer.purchases.map((p) => {
-        // Resolve order/shipment/item for navigation
-        const resolvedOrder    = mockOrders.find((o) => o.id === p.orderId);
-        const resolvedShipment = resolvedOrder?.shipments.find((s) =>
-          s.items.some((i) => i.serialNumber.toLowerCase() === p.serialNumber.toLowerCase())
-        );
-        const resolvedItem = resolvedShipment?.items.find(
-          (i) => i.serialNumber.toLowerCase() === p.serialNumber.toLowerCase()
-        );
-
-        const navBase = `customerId=${customer.id}&orderId=${p.orderId}` +
-          `&itemId=${resolvedItem?.id ?? ""}&shipmentId=${resolvedShipment?.id ?? ""}`;
-
         // Tickets for this specific product
         const productTickets     = allTickets.filter((t) => t.serialNumber === p.serialNumber);
         const productComplaints  = productTickets.filter((t) => PRODUCT_COMPLAINT_CATS.has(t.category));
         const serviceOrders      = productTickets.filter((t) => SERVICE_CATS.has(t.category));
         const serviceComplaints  = productTickets.filter((t) => COMPLAINT_CATS.has(t.category));
+
+        // Installation status display: show "In Progress" when a service order ticket already exists
+        const installInProgress = p.installationStatus === "Pending" && serviceOrders.length > 0;
 
         return (
           <div key={p.id} className="bg-card rounded-xl border border-border overflow-hidden">
@@ -143,11 +134,19 @@ export default function CustomerProfilePage() {
                   <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
                     p.installationStatus === "Completed"
                       ? "bg-emerald-100 text-emerald-700"
+                      : installInProgress
+                      ? "bg-blue-100 text-blue-700"
                       : p.installationStatus === "Pending"
                       ? "bg-amber-100 text-amber-700"
                       : "bg-muted text-muted-foreground"
                   }`}>
-                    Install: {p.installationStatus}
+                    {p.installationStatus === "Completed"
+                      ? "Installed"
+                      : installInProgress
+                      ? "Installation: In Progress"
+                      : p.installationStatus === "Pending"
+                      ? "Installation: Pending"
+                      : "Not Required"}
                   </span>
                 </div>
               </div>
@@ -176,17 +175,26 @@ export default function CustomerProfilePage() {
 
               {/* ── Per-product Action Buttons ── */}
               <div className="flex gap-2 mt-3">
+                {/* Raise Complaint — customer mode so system always shows violet customer card */}
                 <button
                   onClick={() =>
-                    navigate(`/ticket/create?${navBase}&category=Order+Issues`)
+                    navigate(
+                      `/ticket/create?customerId=${customer.id}` +
+                      `&preSelectSerial=${p.serialNumber}`
+                    )
                   }
                   className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-[10px] font-semibold hover:bg-blue-100 active:opacity-80 transition-colors"
                 >
                   <AlertTriangle className="w-3 h-3" /> Raise Complaint
                 </button>
+                {/* Service Request — customer mode with actionType=service */}
                 <button
                   onClick={() =>
-                    navigate(`/ticket/create?${navBase}&actionType=service`)
+                    navigate(
+                      `/ticket/create?customerId=${customer.id}` +
+                      `&preSelectSerial=${p.serialNumber}` +
+                      `&actionType=service`
+                    )
                   }
                   className="flex-1 flex items-center justify-center gap-1 py-2 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg text-[10px] font-semibold hover:bg-teal-100 active:opacity-80 transition-colors"
                 >
