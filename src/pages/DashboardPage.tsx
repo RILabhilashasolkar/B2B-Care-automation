@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowUpRight, ShoppingBag, Headphones, Search,
   Package, Users, AlertTriangle, Wrench, ChevronRight,
   X
 } from "lucide-react";
@@ -39,14 +38,6 @@ const installGroups = [
   { label: "Eligible (not yet requested)", cls: "status-open",        count: installItems.filter(i => i.installationEligible && !i.installationRequested).length },
   { label: "Requested",                   cls: "status-in-progress",  count: installItems.filter(i => i.installationRequested).length },
   { label: "Not Done by Us",              cls: "status-closed",       count: installItems.filter(i => i.installationNotByUs).length },
-];
-
-// ── Quick actions ─────────────────────────────────────────────────────────────
-const quickActions = [
-  { label: "My Orders",    description: "View B2B orders",    icon: ShoppingBag, path: "/orders" },
-  { label: "Self Help",    description: "Raise your tickets", icon: Headphones,  path: "/service/self" },
-  { label: "My Customers", description: "Customer service",   icon: Users,       path: "/service/customer" },
-  { label: "SO Lookup",    description: "Track service orders", icon: Search,    path: "/service/lookup" },
 ];
 
 const activity = [
@@ -230,8 +221,8 @@ export default function DashboardPage() {
     <div className="space-y-4 animate-fade-in">
       {/* Greeting */}
       <div className="pt-1">
-        <h1 className="text-base font-bold text-foreground">Welcome back, Arun 👋</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Here's your service activity overview</p>
+        <h1 className="text-base font-bold text-foreground">Help Desk Overview</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Hi Arun 👋 — your B2B service activity at a glance</p>
       </div>
 
       {/* KPI Stat Cards — 2×2, double-tap to expand */}
@@ -272,29 +263,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Quick Actions — 2×2 grid */}
-      <div>
-        <h2 className="text-sm font-bold text-foreground mb-2">Quick Actions</h2>
-        <div className="grid grid-cols-2 gap-2.5">
-          {quickActions.map((action) => (
-            <Link
-              key={action.path}
-              to={action.path}
-              className="group bg-card rounded-xl border border-border p-3 active:bg-accent/10 transition-colors"
-            >
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <action.icon className="w-[18px] h-[18px] text-primary" />
-                </div>
-                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />
-              </div>
-              <p className="text-xs font-bold text-foreground">{action.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{action.description}</p>
-            </Link>
-          ))}
-        </div>
-      </div>
-
       {/* Recent Activity */}
       <div>
         <h2 className="text-sm font-bold text-foreground mb-2">Recent Activity</h2>
@@ -302,7 +270,7 @@ export default function DashboardPage() {
           {activity.map((item) => (
             <Link
               key={item.id}
-              to={item.id.startsWith("SO-") ? "/service/lookup" : `/ticket/${item.id}`}
+              to={item.id.startsWith("SO-") ? "/service/customer" : `/ticket/${item.id}`}
               className="flex items-center gap-3 px-3 py-3 active:bg-accent/10 transition-colors"
             >
               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${

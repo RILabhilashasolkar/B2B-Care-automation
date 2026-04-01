@@ -32,7 +32,7 @@ const navItems = [
 const bottomTabs = [
   { label: "Orders", icon: ShoppingBag, path: "/orders" },
   { label: "Support", icon: LifeBuoy, path: "/help" },
-  { label: "Home", icon: Home, path: "/" },
+  { label: "Help Desk", icon: Home, path: "/" },
   { label: "Customers", icon: Users, path: "/service/customer" },
   { label: "My Business", icon: Briefcase, path: "/my-business" },
 ];
