@@ -33,7 +33,7 @@ type TabKey = "all" | "order" | "service" | "complaint";
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "all",       label: "All",          icon: Hash },
-  { key: "order",     label: "Order",        icon: ShoppingBag },
+  { key: "order",     label: "Product",      icon: ShoppingBag },
   { key: "service",   label: "Service",      icon: Wrench },
   { key: "complaint", label: "Complaints",   icon: AlertOctagon },
 ];
@@ -259,7 +259,7 @@ export default function CustomerDashboardPage() {
         {activeTab === "order" && (
           <div className="flex items-center gap-1.5 mb-2 px-0.5">
             <ShoppingBag className="w-3 h-3 text-blue-500" />
-            <p className="text-[10px] text-muted-foreground">Order, delivery & billing complaints raised for customers</p>
+            <p className="text-[10px] text-muted-foreground">Product, returns & delivery complaints raised for customers</p>
           </div>
         )}
         {activeTab === "service" && (
@@ -279,7 +279,7 @@ export default function CustomerDashboardPage() {
         <div className="bg-card rounded-xl border border-border divide-y divide-border">
           {visibleTickets.length === 0 ? (
             <div className="px-4 py-8 text-center text-xs text-muted-foreground">
-              No {activeTab === "all" ? "" : activeTab === "order" ? "order " : activeTab === "service" ? "service " : "complaint "}tickets yet.
+              No {activeTab === "all" ? "" : activeTab === "order" ? "product " : activeTab === "service" ? "service " : "complaint "}tickets yet.
             </div>
           ) : (
             visibleTickets.map((ticket) => {
@@ -298,7 +298,7 @@ export default function CustomerDashboardPage() {
                         {/* Kind badge */}
                         {kind === "order" && (
                           <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            <ShoppingBag className="w-2.5 h-2.5" /> Order
+                            <ShoppingBag className="w-2.5 h-2.5" /> Product
                           </span>
                         )}
                         {kind === "service" && (
