@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 const QUICK_ACTIONS = [
-  { label: "Help Desk", desc: "Activity overview", icon: LayoutDashboard, path: "/", bg: "bg-primary/10", color: "text-primary" },
+  { label: "Help Desk", desc: "Activity overview", icon: LayoutDashboard, path: "/help/desk", bg: "bg-primary/10", color: "text-primary" },
   { label: "Self Help", desc: "My purchase issues", icon: Headphones, path: "/service/self", bg: "bg-blue-50", color: "text-blue-600" },
   { label: "My Customers", desc: "Customer service hub", icon: Users, path: "/service/customer", bg: "bg-violet-50", color: "text-violet-600" },
   { label: "Knowledge Base", desc: "Browse articles", icon: HelpCircle, path: "/faq", bg: "bg-amber-50", color: "text-amber-600" },

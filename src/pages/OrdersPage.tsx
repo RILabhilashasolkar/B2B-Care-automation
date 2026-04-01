@@ -7,14 +7,22 @@ type Filters = {
   brand: string;
   productFamily: string;
   soStatus: string;
+  orderStatus: string;
+  dateFrom: string;
+  dateTo: string;
 };
 
 const EMPTY_FILTERS: Filters = {
-  brand: "", productFamily: "", soStatus: "",
+  brand: "", productFamily: "", soStatus: "", orderStatus: "", dateFrom: "", dateTo: "",
 };
 
 const FILTER_LABELS: Record<keyof Filters, string> = {
-  brand: "Brand", productFamily: "Product Family", soStatus: "SO Status",
+  brand: "Brand",
+  productFamily: "Product Family",
+  soStatus: "SO Status",
+  orderStatus: "Order Status",
+  dateFrom: "From Date",
+  dateTo: "To Date",
 };
 
 export default function OrdersPage() {
@@ -47,7 +55,12 @@ export default function OrdersPage() {
   const filtered = mockOrders.filter((o) => {
     const searchMatch = !search || o.id.toLowerCase().includes(search.toLowerCase());
     if (!searchMatch) return false;
+    if (applied.orderStatus && o.status !== applied.orderStatus) return false;
+    if (applied.dateFrom && new Date(o.date) < new Date(applied.dateFrom)) return false;
+    if (applied.dateTo && new Date(o.date) > new Date(applied.dateTo)) return false;
     if (!hasActiveFilters) return true;
+    const itemFilters = applied.brand || applied.productFamily || applied.soStatus;
+    if (!itemFilters) return true;
     return o.shipments.some((s) => s.items.some((i) => itemMatchesFilters(i)));
   });
 
@@ -212,6 +225,47 @@ export default function OrdersPage() {
 
             {/* Filter fields — scrollable */}
             <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
+
+              {/* Order Status — full width */}
+              <div>
+                <label className={labelCls}>Order Status</label>
+                <div className="relative">
+                  <select
+                    value={draft.orderStatus}
+                    onChange={(e) => setDraft({ ...draft, orderStatus: e.target.value })}
+                    className={inputCls + " appearance-none pr-7"}
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="In Transit">In Transit</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Out for Delivery">Out for Delivery</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>From Date</label>
+                  <input
+                    type="date"
+                    value={draft.dateFrom}
+                    onChange={(e) => setDraft({ ...draft, dateFrom: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>To Date</label>
+                  <input
+                    type="date"
+                    value={draft.dateTo}
+                    onChange={(e) => setDraft({ ...draft, dateTo: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
 
               {/* Row 1: Brand */}
               <div className="grid grid-cols-2 gap-3">
