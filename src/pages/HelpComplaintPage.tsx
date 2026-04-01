@@ -24,6 +24,15 @@ const orderStatusBadge = (status: string) =>
   "status-in-progress";
 
 // ── Self Tab ──────────────────────────────────────────────────────────────────
+
+// Pre-build a set of serial numbers already linked to a customer purchase
+const _soldSerials = new Set(
+  mockCustomers.flatMap((c) => c.purchases.map((p) => p.serialNumber.toLowerCase()))
+);
+/** Returns true if the item has been sold to / is linked to a customer */
+const isItemSold = (item: OrderItem) =>
+  !!item.customerMobile || _soldSerials.has(item.serialNumber.toLowerCase());
+
 function SelfTab() {
   const navigate = useNavigate();
   const [query, setQuery] = useState<string>("");
@@ -32,19 +41,39 @@ function SelfTab() {
 
   const trimmed = query.trim().toLowerCase();
 
-  // Show all orders when no search, filter when query >= 3 chars
-  const filteredOrders = trimmed.length >= 3
-    ? mockOrders.filter((o) =>
+  // Helper: unsold items within a shipment (respecting search query)
+  const unsoldItems = (shipment: Shipment) =>
+    shipment.items.filter(
+      (i) =>
+        !isItemSold(i) &&
+        (trimmed.length < 3 ||
+          i.serialNumber.toLowerCase().includes(trimmed) ||
+          i.name.toLowerCase().includes(trimmed))
+    );
+
+  // Helper: shipments that have at least one unsold item (respecting search)
+  const activeShipments = (order: Order) =>
+    order.shipments.filter(
+      (s) =>
+        unsoldItems(s).length > 0 ||
+        (trimmed.length >= 3 && s.id.toLowerCase().includes(trimmed))
+    );
+
+  // Show all orders (with unsold items) when no search; filter by query >= 3 chars
+  const filteredOrders = mockOrders.filter((o) => {
+    if (trimmed.length >= 3) {
+      return (
         o.id.toLowerCase().includes(trimmed) ||
-        o.shipments.some((s) =>
-          s.id.toLowerCase().includes(trimmed) ||
-          s.items.some((i) =>
-            i.serialNumber.toLowerCase().includes(trimmed) ||
-            i.name.toLowerCase().includes(trimmed)
-          )
+        o.shipments.some(
+          (s) =>
+            s.id.toLowerCase().includes(trimmed) ||
+            unsoldItems(s).length > 0
         )
-      )
-    : mockOrders;
+      );
+    }
+    // Default: only show orders that have at least one unsold item
+    return o.shipments.some((s) => unsoldItems(s).length > 0);
+  });
 
   return (
     <div className="space-y-3">
@@ -89,7 +118,8 @@ function SelfTab() {
       <div className="space-y-2">
         {filteredOrders.map((order) => {
           const isOrderExpanded = expandedOrderId === order.id;
-          const totalItems = order.shipments.reduce((n, s) => n + s.items.length, 0);
+          const visibleShipments = activeShipments(order);
+          const totalItems = visibleShipments.reduce((n, s) => n + unsoldItems(s).length, 0);
 
           return (
             <div key={order.id} className="bg-card border border-border rounded-xl overflow-hidden">
@@ -137,8 +167,9 @@ function SelfTab() {
                   </button>
 
                   {/* Shipments */}
-                  {order.shipments.map((shipment) => {
+                  {visibleShipments.map((shipment) => {
                     const isShipmentExpanded = expandedShipmentId === shipment.id;
+                    const itemsToShow = unsoldItems(shipment);
                     return (
                       <div key={shipment.id} className="border-t border-border/60">
                         {/* Shipment row */}
@@ -152,7 +183,7 @@ function SelfTab() {
                           <div className="flex-1 min-w-0">
                             <p className="text-[11px] font-mono font-semibold">{shipment.id}</p>
                             <p className="text-[10px] text-muted-foreground">
-                              {shipment.items.length} item{shipment.items.length !== 1 ? "s" : ""}
+                              {itemsToShow.length} unsold item{itemsToShow.length !== 1 ? "s" : ""}
                             </p>
                           </div>
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${shipmentStatusBadge(shipment.status)}`}>
@@ -184,8 +215,8 @@ function SelfTab() {
                               </span>
                             </button>
 
-                            {/* Items */}
-                            {shipment.items.map((item) => (
+                            {/* Unsold items only */}
+                            {itemsToShow.map((item) => (
                               <button
                                 key={item.id}
                                 onClick={() =>
