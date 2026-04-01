@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Headphones, Users, HelpCircle, Phone, MessageCircle,
-  TicketCheck, ChevronRight, ArrowRight,
+  Headphones, Users, HelpCircle, Phone, MessageCircle, Mail,
+  TicketCheck, ChevronRight,
   Package, AlertTriangle, Wrench, X
 } from "lucide-react";
 import {
@@ -12,12 +12,13 @@ import {
 const CALL_CENTRE = "tel:18001234567";
 
 // ── Quick Actions ─────────────────────────────────────────────────────────────
-const QUICK_ACTIONS: Array<{ label: string; desc: string; icon: typeof Phone; path?: string; tel?: string; bg: string; color: string }> = [
-  { label: "Self Help",     desc: "My purchase issues",     icon: Headphones,    path: "/service/self",     bg: "bg-blue-50",    color: "text-blue-600" },
-  { label: "My Customers",  desc: "Customer service hub",   icon: Users,         path: "/service/customer", bg: "bg-violet-50",  color: "text-violet-600" },
-  { label: "Knowledge Base",desc: "Browse articles",        icon: HelpCircle,    path: "/faq",              bg: "bg-amber-50",   color: "text-amber-600" },
-  { label: "Chat",          desc: "Chat with JMD support",  icon: MessageCircle, path: "/chat",             bg: "bg-green-50",   color: "text-green-600" },
-  { label: "Call Us",       desc: "1800-XXX-XXXX",          icon: Phone,         tel: CALL_CENTRE,          bg: "bg-pink-50",    color: "text-pink-600" },
+const QUICK_ACTIONS: Array<{ label: string; desc: string; icon: typeof Phone; path?: string; tel?: string; mailto?: string; bg: string; color: string }> = [
+  { label: "Self Help",     desc: "My purchase issues",          icon: Headphones,    path: "/service/self",                       bg: "bg-blue-50",    color: "text-blue-600" },
+  { label: "My Customers",  desc: "Customer service hub",        icon: Users,         path: "/service/customer",                   bg: "bg-violet-50",  color: "text-violet-600" },
+  { label: "Knowledge Base",desc: "Browse articles",             icon: HelpCircle,    path: "/faq",                                bg: "bg-amber-50",   color: "text-amber-600" },
+  { label: "Chat",          desc: "Chat with JMD support",       icon: MessageCircle, path: "/chat",                               bg: "bg-green-50",   color: "text-green-600" },
+  { label: "Call Us",       desc: "1800-XXX-XXXX",               icon: Phone,         tel: CALL_CENTRE,                            bg: "bg-pink-50",    color: "text-pink-600" },
+  { label: "Email Us",      desc: "jmdpartnercare@ril.com",      icon: Mail,          mailto: "mailto:jmdpartnercare@ril.com",     bg: "bg-cyan-50",    color: "text-cyan-600" },
 ];
 
 const TOP_FAQ = [
@@ -222,15 +223,7 @@ export default function HelpCenterPage() {
       <div className="bg-gradient-to-br from-primary to-blue-700 px-4 py-6 text-white">
         <p className="text-xs text-white/70 mb-1">Hi Arun 👋</p>
         <h1 className="text-xl font-bold mb-1">How can we help you?</h1>
-        <p className="text-sm text-white/80 mb-4">JMD B2B Service & Care Hub</p>
-        <Link
-          to="/help/complaint"
-          className="inline-flex items-center gap-2 bg-white text-primary text-sm font-bold px-5 py-2.5 rounded-full shadow hover:opacity-90 transition-opacity"
-        >
-          <TicketCheck className="w-4 h-4" />
-          Raise a Support Ticket
-          <ArrowRight className="w-3 h-3" />
-        </Link>
+        <p className="text-sm text-white/80">JMD B2B Service & Care Hub</p>
       </div>
 
       {/* Primary Action Cards */}
@@ -265,50 +258,6 @@ export default function HelpCenterPage() {
         </div>
       </div>
 
-      {/* Quick Actions — 5 items */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="grid grid-cols-3 gap-2.5">
-          {QUICK_ACTIONS.map((a) => {
-            const cls = "bg-white rounded-xl p-3 flex flex-col items-center gap-2 shadow-sm border border-border active:scale-95 transition-transform";
-            const inner = (
-              <>
-                <div className={`w-10 h-10 rounded-xl ${a.bg} flex items-center justify-center`}>
-                  <a.icon className={`w-5 h-5 ${a.color}`} />
-                </div>
-                <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{a.label}</span>
-              </>
-            );
-            return a.tel ? (
-              <a key={a.label} href={a.tel} className={cls}>{inner}</a>
-            ) : (
-              <Link key={a.label} to={a.path!} className={cls}>{inner}</Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* My Tickets CTA */}
-      <div className="px-4 py-2">
-        <Link
-          to="/service/self"
-          className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border w-full"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center">
-              <TicketCheck className="w-5 h-5 text-violet-600" />
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-foreground">My Tickets</p>
-              <p className="text-xs text-muted-foreground">Track your open & past requests</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">2 Open</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </Link>
-      </div>
-
       {/* ── Help Desk — KPI Stat Cards (double-tap to drill down) ── */}
       <div className="px-4 pt-3 pb-1">
         <div className="flex items-center justify-between mb-2">
@@ -341,6 +290,52 @@ export default function HelpCenterPage() {
         {expandedStat && (
           <StatDetail statKey={expandedStat} onClose={() => setExpandedStat(null)} />
         )}
+      </div>
+
+      {/* Quick Actions — 6 items (3×2) */}
+      <div className="px-4 pt-3 pb-2">
+        <div className="grid grid-cols-3 gap-2.5">
+          {QUICK_ACTIONS.map((a) => {
+            const cls = "bg-white rounded-xl p-3 flex flex-col items-center gap-2 shadow-sm border border-border active:scale-95 transition-transform";
+            const inner = (
+              <>
+                <div className={`w-10 h-10 rounded-xl ${a.bg} flex items-center justify-center`}>
+                  <a.icon className={`w-5 h-5 ${a.color}`} />
+                </div>
+                <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{a.label}</span>
+              </>
+            );
+            return a.tel ? (
+              <a key={a.label} href={a.tel} className={cls}>{inner}</a>
+            ) : a.mailto ? (
+              <a key={a.label} href={a.mailto} className={cls}>{inner}</a>
+            ) : (
+              <Link key={a.label} to={a.path!} className={cls}>{inner}</Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* My Tickets CTA */}
+      <div className="px-4 py-2">
+        <Link
+          to="/service/self"
+          className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border w-full"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center">
+              <TicketCheck className="w-5 h-5 text-violet-600" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-foreground">My Tickets</p>
+              <p className="text-xs text-muted-foreground">Track your open & past requests</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">2 Open</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </Link>
       </div>
 
       {/* Recent Activity */}
