@@ -162,7 +162,7 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
         {activeOrders.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-3">No active orders</p>
         ) : activeOrders.map(o => (
-          <Link key={o.id} to={`/orders/${o.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+          <Link key={o.id} to={`/orders/${o.id}?source=help`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold text-primary truncate">{o.id.slice(0, 14)}…</p>
               <p className="text-[10px] text-muted-foreground">{o.items} items · ₹{o.total.toLocaleString("en-IN")}</p>
@@ -187,7 +187,7 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
       ) : (
         <div className="space-y-1.5">
           {openRefundTickets.map(t => (
-            <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+            <Link key={t.id} to={`/ticket/${t.id}?source=help`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-bold text-primary">{t.id}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{t.subcategory}</p>
@@ -213,7 +213,7 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
       ) : (
         <div className="space-y-1.5">
           {openReturnTickets.map(t => (
-            <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+            <Link key={t.id} to={`/ticket/${t.id}?source=help`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-bold text-primary">{t.id}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{t.subcategory}</p>
@@ -249,7 +249,7 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
         <div className="space-y-1.5">
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Installation Tickets</p>
           {openInstallTickets.map(t => (
-            <Link key={t.id} to={`/ticket/${t.id}`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
+            <Link key={t.id} to={`/ticket/${t.id}?source=help`} className="flex items-center justify-between py-2 border-b border-border last:border-0 active:opacity-70">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-bold text-primary">{t.id}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{t.customerName ?? "—"} · {t.subcategory}</p>
@@ -397,7 +397,7 @@ export default function HelpCenterPage() {
           {activity.map((item) => (
             <Link
               key={item.id}
-              to={item.id.startsWith("SO-") ? "/service/customer" : `/ticket/${item.id}`}
+              to={item.id.startsWith("SO-") ? "/service/customer" : `/ticket/${item.id}?source=help`}
               className="flex items-center gap-3 px-3 py-3 active:bg-accent/10 transition-colors"
             >
               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${

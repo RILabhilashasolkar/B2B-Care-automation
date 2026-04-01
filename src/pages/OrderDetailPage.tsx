@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { mockOrders, type OrderItem, type ServiceOrderStatus } from "../lib/mockData";
 import { ArrowLeft, Package, ChevronRight, Truck, MessageCircle, Wrench, X, Ban, Phone, Ticket } from "lucide-react";
 import { useState } from "react";
@@ -107,6 +107,8 @@ function CreateInstallationModal({ item, orderId, onClose, onSubmit }: { item: O
 
 export default function OrderDetailPage() {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
+  const source = searchParams.get("source") || "";
   const order = mockOrders.find((o) => o.id === orderId);
   const [installItem,      setInstallItem]      = useState<OrderItem | null>(null);
   const [installRequests,  setInstallRequests]  = useState<Record<string, { customerName: string; mobile: string }>>({});
@@ -147,7 +149,7 @@ export default function OrderDetailPage() {
   return (
     <div className="space-y-3 animate-fade-in">
       <div className="flex items-center gap-3">
-        <Link to="/orders" className="p-2 rounded-lg hover:bg-accent transition-colors">
+        <Link to={source === "help" ? "/help" : "/orders"} className="p-2 rounded-lg hover:bg-accent transition-colors">
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </Link>
         <div>

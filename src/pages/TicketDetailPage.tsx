@@ -1,14 +1,19 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { mockSelfTickets, mockCustomerTickets } from "../lib/mockData";
 import { ArrowLeft, Clock, User, MessageSquare } from "lucide-react";
 
 export default function TicketDetailPage() {
   const { ticketId } = useParams();
+  const [searchParams] = useSearchParams();
+  const source = searchParams.get("source") || "";
+
   const ticket = [...mockSelfTickets, ...mockCustomerTickets].find((t) => t.id === ticketId);
 
   if (!ticket) return <div className="text-center py-20 text-muted-foreground">Ticket not found</div>;
 
-  const backPath = ticket.type === "self" ? "/service/self" : "/service/customer";
+  const backPath = source === "help"
+    ? "/help"
+    : ticket.type === "self" ? "/service/self" : "/service/customer";
 
   return (
     <div className="space-y-3 animate-fade-in max-w-3xl">
