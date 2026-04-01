@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Search, X, Package, Phone, ShieldCheck,
   AlertCircle, ChevronRight, Truck, User, MapPin,
+  SlidersHorizontal, ChevronDown,
 } from "lucide-react";
 import {
   mockOrders, mockCustomers,
@@ -23,6 +24,32 @@ const orderStatusBadge = (status: string) =>
   status === "Processing" ? "status-open"      :
   "status-in-progress";
 
+// ── Self Tab — Filter types & constants ──────────────────────────────────────
+
+interface SelfFilters {
+  orderStatus: string;
+  dateFrom: string;
+  dateTo: string;
+  brand: string;
+  productFamily: string;
+  productDetail: string;
+}
+
+const SELF_EMPTY_FILTERS: SelfFilters = {
+  orderStatus: "", dateFrom: "", dateTo: "",
+  brand: "", productFamily: "", productDetail: "",
+};
+
+const ORDER_STATUSES = ["Delivered", "In Transit", "Processing", "Out for Delivery"];
+
+// Product detail options per brand → product family (cascading)
+const COMPLAINT_DETAIL_MAP: Record<string, Record<string, string[]>> = {
+  Samsung:   { Television:        ["Crystal UHD", "QLED", "4K", "Full HD"] },
+  LG:        { "Air Conditioner": ["1 Ton", "1.5 Ton", "2 Ton", "Split AC", "Window AC", "Inverter AC"] },
+  Whirlpool: { Refrigerator:      ["Single Door", "Double Door", "Frost Free", "Direct Cool"] },
+  Havells:   { Fan:               ["Ceiling Fan", "Table Fan", "Wall Fan", "Exhaust Fan"] },
+};
+
 // ── Self Tab ──────────────────────────────────────────────────────────────────
 
 // Pre-build a set of serial numbers already linked to a customer purchase
@@ -38,20 +65,58 @@ function SelfTab() {
   const [query, setQuery] = useState<string>("");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [expandedShipmentId, setExpandedShipmentId] = useState<string | null>(null);
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [draft, setDraft] = useState<SelfFilters>(SELF_EMPTY_FILTERS);
+  const [applied, setApplied] = useState<SelfFilters>(SELF_EMPTY_FILTERS);
 
   const trimmed = query.trim().toLowerCase();
 
-  // Helper: unsold items within a shipment (respecting search query)
+  // ── Derived filter options (cascading) ──────────────────────────────────────
+  const allItems = mockOrders.flatMap((o) => o.shipments.flatMap((s) => s.items));
+  const availableBrands = [...new Set(allItems.map((i) => i.brand))];
+  const availableFamilies = [...new Set(
+    (draft.brand ? allItems.filter((i) => i.brand === draft.brand) : allItems)
+      .map((i) => i.productFamily)
+  )];
+  const availableDetails: string[] =
+    draft.brand && draft.productFamily
+      ? (COMPLAINT_DETAIL_MAP[draft.brand]?.[draft.productFamily] ?? [])
+      : [];
+  const showProductDetail = availableDetails.length > 0;
+
+  // ── Active filter count ──────────────────────────────────────────────────────
+  const activeFilterCount = [
+    applied.orderStatus, applied.dateFrom, applied.dateTo,
+    applied.brand, applied.productFamily, applied.productDetail,
+  ].filter(Boolean).length;
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  const itemMatchesFilters = (i: OrderItem) => {
+    if (applied.brand && i.brand !== applied.brand) return false;
+    if (applied.productFamily && i.productFamily !== applied.productFamily) return false;
+    if (applied.productDetail) {
+      const nl = i.name.toLowerCase();
+      const dl = applied.productDetail.toLowerCase();
+      const ok = applied.productDetail === "1 Ton"
+        ? nl.includes("1 ton") && !nl.includes("1.5")
+        : nl.includes(dl);
+      if (!ok) return false;
+    }
+    return true;
+  };
+
+  // Helper: unsold items within a shipment matching both search + item-level filters
   const unsoldItems = (shipment: Shipment) =>
     shipment.items.filter(
       (i) =>
         !isItemSold(i) &&
+        itemMatchesFilters(i) &&
         (trimmed.length < 3 ||
           i.serialNumber.toLowerCase().includes(trimmed) ||
           i.name.toLowerCase().includes(trimmed))
     );
 
-  // Helper: shipments that have at least one unsold item (respecting search)
+  // Helper: shipments that have at least one qualifying unsold item
   const activeShipments = (order: Order) =>
     order.shipments.filter(
       (s) =>
@@ -59,46 +124,118 @@ function SelfTab() {
         (trimmed.length >= 3 && s.id.toLowerCase().includes(trimmed))
     );
 
-  // Show all orders (with unsold items) when no search; filter by query >= 3 chars
+  // ── Filter orders ────────────────────────────────────────────────────────────
   const filteredOrders = mockOrders.filter((o) => {
+    // Order status
+    if (applied.orderStatus && o.status !== applied.orderStatus) return false;
+    // Date range (order placed date)
+    if (applied.dateFrom && new Date(o.date) < new Date(applied.dateFrom)) return false;
+    if (applied.dateTo   && new Date(o.date) > new Date(applied.dateTo))   return false;
+    // Text search
     if (trimmed.length >= 3) {
-      return (
-        o.id.toLowerCase().includes(trimmed) ||
-        o.shipments.some(
-          (s) =>
-            s.id.toLowerCase().includes(trimmed) ||
-            unsoldItems(s).length > 0
-        )
-      );
+      const match = o.id.toLowerCase().includes(trimmed) ||
+        o.shipments.some((s) => s.id.toLowerCase().includes(trimmed) || unsoldItems(s).length > 0);
+      if (!match) return false;
+    } else {
+      if (!o.shipments.some((s) => unsoldItems(s).length > 0)) return false;
     }
-    // Default: only show orders that have at least one unsold item
-    return o.shipments.some((s) => unsoldItems(s).length > 0);
+    // Brand / family / detail filters (must have at least one matching item)
+    if (applied.brand || applied.productFamily || applied.productDetail) {
+      if (!o.shipments.some((s) => s.items.some((i) => itemMatchesFilters(i)))) return false;
+    }
+    return true;
   });
+
+  const applyFilters = () => { setApplied(draft); setShowFilterSheet(false); };
+  const clearFilters = () => { setDraft(SELF_EMPTY_FILTERS); setApplied(SELF_EMPTY_FILTERS); setShowFilterSheet(false); };
+
+  const inputCls = "w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors";
+  const labelCls = "block text-[11px] font-semibold text-muted-foreground mb-1.5";
 
   return (
     <div className="space-y-3">
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by Order ID, Shipment ID or Serial No."
-          className="w-full pl-9 pr-9 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
-        />
-        {query && (
-          <button
-            onClick={() => setQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-          >
-            <X className="w-3.5 h-3.5 text-muted-foreground" />
-          </button>
-        )}
+      {/* Search + Filter row */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by Order ID, Shipment ID or Serial No."
+            className="w-full pl-9 pr-9 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+        <button
+          onClick={() => { setDraft(applied); setShowFilterSheet(true); }}
+          className={`relative flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all flex-shrink-0 ${
+            activeFilterCount > 0
+              ? "bg-primary text-white border-primary"
+              : "bg-card border-border text-foreground"
+          }`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center text-[9px] font-black">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Active filter chips */}
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {applied.orderStatus && (
+            <button onClick={() => setApplied((p) => ({ ...p, orderStatus: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">
+              {applied.orderStatus} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {applied.dateFrom && (
+            <button onClick={() => setApplied((p) => ({ ...p, dateFrom: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">
+              From: {applied.dateFrom} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {applied.dateTo && (
+            <button onClick={() => setApplied((p) => ({ ...p, dateTo: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">
+              To: {applied.dateTo} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {applied.brand && (
+            <button onClick={() => setApplied((p) => ({ ...p, brand: "", productFamily: "", productDetail: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">
+              Brand: {applied.brand} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {applied.productFamily && (
+            <button onClick={() => setApplied((p) => ({ ...p, productFamily: "", productDetail: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">
+              {applied.productFamily} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {applied.productDetail && (
+            <button onClick={() => setApplied((p) => ({ ...p, productDetail: "" }))}
+              className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">
+              {applied.productDetail} <X className="w-2.5 h-2.5" />
+            </button>
+          )}
+          <button onClick={clearFilters} className="px-2 py-1 text-[10px] font-semibold text-muted-foreground underline">
+            Clear All
+          </button>
+        </div>
+      )}
 
       {/* Section label */}
       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-        {trimmed.length >= 3
+        {trimmed.length >= 3 || activeFilterCount > 0
           ? `${filteredOrders.length} order${filteredOrders.length !== 1 ? "s" : ""} found`
           : "Recent Orders — tap to expand"}
       </p>
@@ -109,8 +246,140 @@ function SelfTab() {
           <Package className="w-10 h-10 text-muted-foreground/40 mb-3" />
           <p className="text-sm font-semibold text-foreground">No orders found</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Try a different order ID, shipment ID or serial number
+            Try adjusting your search or filters
           </p>
+          {activeFilterCount > 0 && (
+            <button onClick={clearFilters} className="mt-3 text-xs text-primary font-semibold underline">
+              Clear all filters
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Filter Sheet ── */}
+      {showFilterSheet && (
+        <div className="absolute inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowFilterSheet(false)} />
+          <div className="relative bg-card rounded-t-3xl shadow-2xl z-10 max-h-[85%] flex flex-col">
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-border rounded-full" />
+            </div>
+            {/* Header */}
+            <div className="flex items-start justify-between px-5 py-3 border-b border-border">
+              <div>
+                <p className="text-sm font-bold text-foreground">Filter Orders</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Filter across all items in each order</p>
+              </div>
+              <button onClick={() => setShowFilterSheet(false)} className="p-1.5 rounded-full bg-muted hover:bg-accent transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Order Status */}
+              <div>
+                <label className={labelCls}>Order Status</label>
+                <div className="relative">
+                  <select
+                    value={draft.orderStatus}
+                    onChange={(e) => setDraft({ ...draft, orderStatus: e.target.value })}
+                    className={inputCls + " appearance-none pr-7"}
+                  >
+                    <option value="">All Statuses</option>
+                    {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+              {/* Date range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>From Date</label>
+                  <input type="date" value={draft.dateFrom}
+                    onChange={(e) => setDraft({ ...draft, dateFrom: e.target.value })}
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>To Date</label>
+                  <input type="date" value={draft.dateTo}
+                    onChange={(e) => setDraft({ ...draft, dateTo: e.target.value })}
+                    className={inputCls} />
+                </div>
+              </div>
+              {/* Brand */}
+              <div>
+                <label className={labelCls}>Brand</label>
+                <div className="relative">
+                  <select
+                    value={draft.brand}
+                    onChange={(e) => setDraft({ ...draft, brand: e.target.value, productFamily: "", productDetail: "" })}
+                    className={inputCls + " appearance-none pr-7"}
+                  >
+                    <option value="">All Brands</option>
+                    {availableBrands.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+              {/* Product Family (depends on brand) */}
+              <div>
+                <label className={labelCls}>
+                  Product Family
+                  {draft.brand && <span className="ml-1 font-normal text-primary/70">({draft.brand})</span>}
+                </label>
+                <div className="relative">
+                  <select
+                    value={draft.productFamily}
+                    onChange={(e) => setDraft({ ...draft, productFamily: e.target.value, productDetail: "" })}
+                    className={inputCls + " appearance-none pr-7"}
+                  >
+                    <option value="">All Families</option>
+                    {availableFamilies.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+              {/* Product Details (depends on brand + family) */}
+              {showProductDetail && (
+                <div>
+                  <label className={labelCls}>
+                    Product Details
+                    {draft.productFamily && <span className="ml-1 font-normal text-primary/70">({draft.productFamily})</span>}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={draft.productDetail}
+                      onChange={(e) => setDraft({ ...draft, productDetail: e.target.value })}
+                      className={inputCls + " appearance-none pr-7"}
+                    >
+                      <option value="">All Details</option>
+                      {availableDetails.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Footer */}
+            <div className="flex items-center gap-3 px-5 py-4 border-t border-border flex-shrink-0">
+              <button
+                onClick={() => setDraft(SELF_EMPTY_FILTERS)}
+                className="flex-1 py-3 rounded-xl border border-border text-xs font-bold text-foreground bg-background active:bg-muted transition-colors"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={applyFilters}
+                className="flex-2 flex-grow-[2] py-3 rounded-xl bg-primary text-white text-xs font-bold active:opacity-90 transition-opacity"
+              >
+                Apply Filters
+                {[draft.orderStatus, draft.dateFrom, draft.dateTo, draft.brand, draft.productFamily, draft.productDetail].filter(Boolean).length > 0
+                  ? ` (${[draft.orderStatus, draft.dateFrom, draft.dateTo, draft.brand, draft.productFamily, draft.productDetail].filter(Boolean).length})`
+                  : ""}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
