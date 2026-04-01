@@ -15,6 +15,8 @@ import CreateTicketPage from "./pages/CreateTicketPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
 import SmartCreateTicketPage from "./pages/SmartCreateTicketPage";
+import HelpComplaintPage from "./pages/HelpComplaintPage";
+import HelpInstallationPage from "./pages/HelpInstallationPage";
 import FaqPage from "./pages/FaqPage";
 import LiveChatPage from "./pages/LiveChatPage";
 import MyBusinessPage from "./pages/MyBusinessPage";
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/orders/:orderId/item/:itemId" element={<ItemDetailPage />} />
             <Route path="/help" element={<HelpCenterPage />} />
             <Route path="/help/desk" element={<HelpCenterPage />} />
+            <Route path="/help/complaint" element={<HelpComplaintPage />} />
+            <Route path="/help/installation" element={<HelpInstallationPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/chat" element={<LiveChatPage />} />
             <Route path="/my-business" element={<MyBusinessPage />} />

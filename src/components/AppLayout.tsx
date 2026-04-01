@@ -60,8 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (path === "/orders") return location.pathname.startsWith("/orders");
     if (path === "/my-business") return location.pathname === "/my-business";
     if (path === "/help") return (
-      location.pathname === "/help" ||
-      location.pathname === "/help/desk" ||
+      location.pathname.startsWith("/help") ||
       location.pathname === "/faq" ||
       location.pathname === "/chat" ||
       location.pathname.startsWith("/service") ||
