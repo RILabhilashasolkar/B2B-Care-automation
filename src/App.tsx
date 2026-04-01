@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "./lib/tooltip-stub";
 import AppLayout from "./components/AppLayout";
 import PhoneFrame from "./components/PhoneFrame";
@@ -23,7 +23,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <BrowserRouter>
+      <HashRouter>
         <PhoneFrame>
         <AppLayout>
           <Routes>
@@ -46,7 +46,7 @@ const App = () => (
           </Routes>
         </AppLayout>
         </PhoneFrame>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
