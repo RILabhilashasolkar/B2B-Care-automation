@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { mockOrders, type OrderItem } from "../lib/mockData";
-import { Package, ChevronRight, Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { mockOrders, mockCustomers, type OrderItem } from "../lib/mockData";
+import { Package, ChevronRight, Search, SlidersHorizontal, X, ChevronDown, ChevronUp, User, Phone, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 const STATUS_CONFIG: { label: string; value: string; activeClass: string; countClass: string }[] = [
@@ -10,6 +10,209 @@ const STATUS_CONFIG: { label: string; value: string; activeClass: string; countC
   { label: "Processing",     value: "Processing",     activeClass: "bg-amber-500 text-white border-amber-500",     countClass: "bg-white/20 text-white" },
   { label: "Out for Delivery", value: "Out for Delivery", activeClass: "bg-violet-600 text-white border-violet-600", countClass: "bg-white/20 text-white" },
 ];
+
+// ── Find Customer (Serial No ↔ Customer Mobile) ──────────────────────────────
+type FCMode = "serial" | "mobile";
+
+interface MatchRow {
+  orderId: string;
+  orderDate: string;
+  shipmentId: string;
+  shipmentStatus: string;
+  shipmentDeliveryDate: string;
+  itemName: string;
+  serialNumber: string;
+  customerName?: string;
+  customerMobile?: string;
+  warrantyStatus?: string;
+}
+
+function FindCustomer() {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<FCMode>("serial");
+  const [query, setQuery] = useState("");
+
+  const trimmed = query.trim().toLowerCase();
+
+  const rows: MatchRow[] = [];
+  if (trimmed.length >= 4) {
+    for (const order of mockOrders) {
+      for (const shipment of order.shipments) {
+        for (const item of shipment.items) {
+          const snMatch   = item.serialNumber.toLowerCase().includes(trimmed);
+          const mobMatch  = (item.customerMobile ?? "").includes(trimmed);
+          const custByMob = mockCustomers.find((c) => c.mobile.includes(trimmed));
+
+          const hit = mode === "serial" ? snMatch
+                    : mode === "mobile" ? (mobMatch || (custByMob?.purchases.some((p) => p.serialNumber.toLowerCase() === item.serialNumber.toLowerCase()) ?? false))
+                    : false;
+
+          if (!hit) continue;
+
+          const customer =
+            mockCustomers.find((c) =>
+              c.purchases.some((p) => p.serialNumber.toLowerCase() === item.serialNumber.toLowerCase())
+            ) ?? (item.customerMobile ? mockCustomers.find((c) => c.mobile === item.customerMobile) : undefined);
+
+          const purchase = customer?.purchases.find(
+            (p) => p.serialNumber.toLowerCase() === item.serialNumber.toLowerCase()
+          );
+
+          rows.push({
+            orderId: order.id,
+            orderDate: order.date,
+            shipmentId: shipment.id,
+            shipmentStatus: shipment.status,
+            shipmentDeliveryDate: shipment.deliveryDate,
+            itemName: item.name,
+            serialNumber: item.serialNumber,
+            customerName: customer?.name,
+            customerMobile: customer?.mobile ?? item.customerMobile,
+            warrantyStatus: purchase?.warrantyStatus,
+          });
+        }
+      }
+    }
+  }
+
+  const noResult = trimmed.length >= 4 && rows.length === 0;
+
+  return (
+    <div className="border border-amber-200 rounded-xl overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-amber-50 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <Search className="w-4 h-4 text-amber-600" />
+          <span className="text-xs font-bold text-foreground">Find Customer for Delivered Item</span>
+        </div>
+        {open
+          ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+      </button>
+
+      {open && (
+        <div className="bg-card p-4 space-y-3">
+          {/* Mode toggle */}
+          <div className="flex bg-muted rounded-lg p-0.5 gap-0.5">
+            {(["serial", "mobile"] as FCMode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setQuery(""); }}
+                className={`flex-1 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
+                  mode === m ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                {m === "serial" ? "🔢 Serial Number" : "📱 Mobile Number"}
+              </button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <input
+              type={mode === "mobile" ? "tel" : "text"}
+              inputMode={mode === "mobile" ? "numeric" : "text"}
+              placeholder={mode === "serial" ? "Enter product serial number" : "Enter customer mobile number"}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full pl-9 pr-9 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            {query && (
+              <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Results */}
+          {rows.length > 0 && (
+            <div className="space-y-2.5">
+              {rows.map((row, i) => (
+                <div key={i} className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-2">
+                  {/* Breadcrumb: Order → Shipment */}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Order</span>
+                      <span className="text-[10px] font-mono font-bold text-foreground">{row.orderId}</span>
+                      <span className="text-muted-foreground text-[10px]">›</span>
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Shipment</span>
+                      <span className="text-[10px] font-mono font-bold text-foreground">{row.shipmentId}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                        row.shipmentStatus === "Delivered" ? "bg-emerald-200 text-emerald-800" : "bg-blue-100 text-blue-700"
+                      }`}>
+                        {row.shipmentStatus}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      {row.shipmentStatus === "Delivered" ? "Delivered" : "Expected"}{" "}
+                      {new Date(row.shipmentDeliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}
+                    </p>
+                  </div>
+
+                  {/* Item + Serial */}
+                  <div className="bg-white rounded-lg px-3 py-2 border border-emerald-100 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{row.itemName}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">SN: <span className="font-mono font-bold text-foreground">{row.serialNumber}</span></p>
+                    </div>
+                    {row.warrantyStatus && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                          row.warrantyStatus === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                        }`}>
+                          {row.warrantyStatus}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Customer */}
+                  {row.customerName ? (
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-emerald-200 flex items-center justify-center flex-shrink-0">
+                        <User className="w-3.5 h-3.5 text-emerald-700" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-foreground">{row.customerName}</p>
+                        {row.customerMobile && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Phone className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">+91 {row.customerMobile}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="ml-auto text-[9px] px-2 py-0.5 bg-emerald-600 text-white rounded-full font-bold flex-shrink-0">Sold</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <User className="w-3.5 h-3.5" />
+                      <span className="text-[11px]">Not linked to a customer yet</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {noResult && (
+            <div className="text-center py-5">
+              <User className="w-7 h-7 text-muted-foreground/30 mx-auto mb-1.5" />
+              <p className="text-xs font-semibold text-foreground">No match found</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {mode === "serial" ? "No item found with this serial number" : "No customer registered with this mobile"}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Filters = {
   brand: string;
@@ -129,6 +332,9 @@ export default function OrdersPage() {
           );
         })}
       </div>
+
+      {/* Find Customer panel */}
+      <FindCustomer />
 
       {/* Search + Filter button */}
       <div className="flex items-center gap-2">
