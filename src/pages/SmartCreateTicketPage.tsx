@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { mockOrders, mockCustomers, mockCustomerTickets, ticketCategories } from "../lib/mockData";
 import {
   ArrowLeft, Package, User, Phone, MapPin, ShieldCheck,
@@ -186,9 +186,12 @@ export default function SmartCreateTicketPage() {
 
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
-        <Link to={backHref} className="p-2 rounded-lg hover:bg-accent transition-colors flex-shrink-0">
+        <button
+          onClick={() => step > 1 ? setStep(step - 1) : navigate(backHref)}
+          className="p-2 rounded-lg hover:bg-accent transition-colors flex-shrink-0"
+        >
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-        </Link>
+        </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-bold text-foreground">Create Ticket</h1>
           <p className="text-xs text-muted-foreground">Step {step} of 4</p>
@@ -626,12 +629,6 @@ export default function SmartCreateTicketPage() {
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-foreground">Select Category</h2>
 
-          {suggestedCategory && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl px-3 py-2 text-xs text-primary">
-              💡 Suggested: <span className="font-bold">{suggestedCategory}</span>
-            </div>
-          )}
-
           <div className="space-y-2">
             {filteredCategories.map((cat) => (
               <button
@@ -646,9 +643,6 @@ export default function SmartCreateTicketPage() {
                 }`}
               >
                 <span className="text-xs font-semibold text-foreground">{cat.category}</span>
-                {cat.category === suggestedCategory && (
-                  <span className="ml-2 text-[10px] text-primary font-bold">✦ Suggested</span>
-                )}
               </button>
             ))}
           </div>
