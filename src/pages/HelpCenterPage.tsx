@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Headphones, Users, Search, HelpCircle, Phone, LayoutDashboard,
+  Headphones, Users, Search, HelpCircle, Phone, LayoutDashboard, MessageCircle,
   Zap, Wrench, Truck, FileText, RotateCcw, Store,
   TicketCheck, ChevronRight, TrendingUp, ArrowRight
 } from "lucide-react";
@@ -10,7 +10,7 @@ const QUICK_ACTIONS = [
   { label: "Self Help", desc: "My purchase issues", icon: Headphones, path: "/service/self", bg: "bg-blue-50", color: "text-blue-600" },
   { label: "My Customers", desc: "Customer service hub", icon: Users, path: "/service/customer", bg: "bg-violet-50", color: "text-violet-600" },
   { label: "Knowledge Base", desc: "Browse articles", icon: HelpCircle, path: "/faq", bg: "bg-amber-50", color: "text-amber-600" },
-  { label: "Chat", desc: "Chat with JMD support", icon: Phone, path: "/chat", bg: "bg-green-50", color: "text-green-600" },
+  { label: "Chat", desc: "Chat with JMD support", icon: MessageCircle, path: "/chat", bg: "bg-green-50", color: "text-green-600" },
   { label: "Call Us", desc: "1800-XXX-XXXX", icon: Phone, path: "/faq", bg: "bg-pink-50", color: "text-pink-600" },
 ];
 
@@ -156,7 +156,7 @@ export default function HelpCenterPage() {
           to="/chat"
           className="flex items-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
         >
-          <Phone className="w-3.5 h-3.5" />
+          <MessageCircle className="w-3.5 h-3.5" />
           Chat
         </Link>
       </div>
