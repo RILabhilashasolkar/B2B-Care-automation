@@ -3,6 +3,14 @@ import { mockOrders, type OrderItem } from "../lib/mockData";
 import { Package, ChevronRight, Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+const STATUS_CONFIG: { label: string; value: string; activeClass: string; countClass: string }[] = [
+  { label: "All",            value: "",               activeClass: "bg-primary text-white border-primary",         countClass: "bg-white/20 text-white" },
+  { label: "Delivered",      value: "Delivered",      activeClass: "bg-emerald-600 text-white border-emerald-600", countClass: "bg-white/20 text-white" },
+  { label: "In Transit",     value: "In Transit",     activeClass: "bg-blue-600 text-white border-blue-600",       countClass: "bg-white/20 text-white" },
+  { label: "Processing",     value: "Processing",     activeClass: "bg-amber-500 text-white border-amber-500",     countClass: "bg-white/20 text-white" },
+  { label: "Out for Delivery", value: "Out for Delivery", activeClass: "bg-violet-600 text-white border-violet-600", countClass: "bg-white/20 text-white" },
+];
+
 type Filters = {
   brand: string;
   productFamily: string;
@@ -79,13 +87,47 @@ export default function OrdersPage() {
   const inputCls = "w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors";
   const labelCls = "block text-[11px] font-semibold text-muted-foreground mb-1.5";
 
+  const statusCounts = STATUS_CONFIG.map((s) => ({
+    ...s,
+    count: s.value === "" ? mockOrders.length : mockOrders.filter((o) => o.status === s.value).length,
+  }));
+
+  const setStatusQuick = (val: string) => {
+    setApplied((prev) => ({ ...prev, orderStatus: prev.orderStatus === val ? "" : val }));
+  };
+
   return (
     <div className="space-y-3 animate-fade-in">
 
       {/* Page Title */}
       <div>
         <h1 className="text-base font-bold text-foreground">My Sales Orders</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">B2B orders with item-level filtering</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{mockOrders.length} orders · B2B retailer view</p>
+      </div>
+
+      {/* Status Breakdown Strip */}
+      <div className="flex gap-2 overflow-x-auto pb-0.5 phone-scroll -mx-1 px-1">
+        {statusCounts.map((s) => {
+          const isActive = applied.orderStatus === s.value;
+          return (
+            <button
+              key={s.value}
+              onClick={() => setStatusQuick(s.value)}
+              className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${
+                isActive
+                  ? s.activeClass
+                  : "bg-card border-border text-foreground hover:bg-accent"
+              }`}
+            >
+              <span>{s.label}</span>
+              <span className={`min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-black px-1 ${
+                isActive ? s.countClass : "bg-muted text-muted-foreground"
+              }`}>
+                {s.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search + Filter button */}
