@@ -24,6 +24,7 @@ export default function SmartCreateTicketPage() {
   const customerId = searchParams.get("customerId") || "";
   const actionType = searchParams.get("actionType") || "";
   const level      = searchParams.get("level")      || "";  // "order" | "shipment" | ""
+  const source     = searchParams.get("source")     || "";  // "help" = came from /help/complaint
 
   // ── Entry mode ────────────────────────────────────────────────────────────
   // "item"     → came from OrderDetailPage / ItemDetailPage with orderId+itemId+shipmentId
@@ -123,7 +124,9 @@ export default function SmartCreateTicketPage() {
   const selectedSub = selectedCat?.subcategories.find((s) => s.name === form.subcategory);
 
   // ── Back navigation ───────────────────────────────────────────────────────
-  const backHref = itemId
+  const backHref = source === "help"
+    ? "/help/complaint"
+    : itemId
     ? `/orders/${orderId}/item/${itemId}`
     : orderId
     ? `/orders/${orderId}`
