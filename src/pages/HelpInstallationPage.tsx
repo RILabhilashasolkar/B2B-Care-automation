@@ -337,13 +337,20 @@ export default function HelpInstallationPage() {
   >({});
   const [serviceLinksSent, setServiceLinksSent] = useState<Record<string, string>>({});
 
-  // ── Product pool: delivered + installationEligible ────────────────────────
+  // ── Product pool: delivered + eligible + installation NOT yet raised ────────
+  // Items with installationRequested or installationNotByUs are tracked under
+  // My Customers → Service Hub and are excluded here
   const productPool: PoolItem[] = mockOrders.flatMap((order) =>
     order.shipments
       .filter((s) => s.status === "Delivered")
       .flatMap((shipment) =>
         shipment.items
-          .filter((item) => item.installationEligible)
+          .filter(
+            (item) =>
+              item.installationEligible &&
+              !item.installationRequested &&
+              !item.installationNotByUs
+          )
           .map((item) => ({ order, shipment, item }))
       )
   );
@@ -370,6 +377,9 @@ export default function HelpInstallationPage() {
   const searchTrimmed = search.trim().toLowerCase();
 
   const filtered = productPool.filter((p) => {
+    // Exclude items for which a request was raised in this session
+    if (installRequests[p.item.id]) return false;
+
     // Text search (show all if < 3 chars)
     if (searchTrimmed.length >= 3) {
       const textMatch =
@@ -470,7 +480,7 @@ export default function HelpInstallationPage() {
           <p className="text-xs text-muted-foreground">Delivered &amp; eligible products</p>
         </div>
         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-700 border border-teal-200 flex-shrink-0">
-          {productPool.length} eligible
+          {productPool.length} pending
         </span>
       </div>
 
