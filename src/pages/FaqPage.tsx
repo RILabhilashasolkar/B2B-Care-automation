@@ -193,7 +193,7 @@ export default function FaqPage() {
             <p className="text-xs text-muted-foreground mt-1 mb-4">Try different keywords or raise a support ticket</p>
             <Link
               to="/orders"
-              className="inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full"
+              className="inline-flex items-center gap-2 bg-primary text-white text-xs font-semibold px-4 py-2 rounded-lg"
             >
               <TicketCheck className="w-4 h-4" />
               Raise a Ticket
@@ -226,7 +226,7 @@ export default function FaqPage() {
                       onClick={() => setExpanded(isOpen ? null : key)}
                       className="w-full flex items-start justify-between gap-3 px-4 py-3.5 text-left active:bg-accent/10 transition-colors"
                     >
-                      <span className="text-[13px] font-medium text-foreground leading-snug flex-1">{item.q}</span>
+                      <span className="text-xs font-medium text-foreground leading-snug flex-1">{item.q}</span>
                       {isOpen ? (
                         <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                       ) : (
@@ -237,38 +237,38 @@ export default function FaqPage() {
                     {/* Answer */}
                     {isOpen && (
                       <div className="px-4 pb-4">
-                        <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">{item.a}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed mb-3">{item.a}</p>
 
                         {/* Feedback */}
                         {fb === null || fb === undefined ? (
                           <div className="flex items-center gap-3">
-                            <span className="text-[11px] text-muted-foreground">Was this helpful?</span>
+                            <span className="text-[10px] text-muted-foreground">Was this helpful?</span>
                             <button
                               onClick={() => handleFeedback(key, "up")}
-                              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-success transition-colors"
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-success transition-colors"
                             >
-                              <ThumbsUp className="w-3.5 h-3.5" /> Yes
+                              <ThumbsUp className="w-3 h-3" /> Yes
                             </button>
                             <button
                               onClick={() => handleFeedback(key, "down")}
-                              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
                             >
-                              <ThumbsDown className="w-3.5 h-3.5" /> No
+                              <ThumbsDown className="w-3 h-3" /> No
                             </button>
                           </div>
                         ) : fb === "up" ? (
-                          <p className="text-[11px] text-success flex items-center gap-1">
+                          <p className="text-[10px] text-success flex items-center gap-1">
                             <ThumbsUp className="w-3 h-3" /> Thanks for your feedback!
                           </p>
                         ) : (
                           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <p className="text-[12px] font-semibold text-amber-800 mb-1">Still not resolved?</p>
-                            <p className="text-[11px] text-amber-700 mb-2.5">
+                            <p className="text-xs font-semibold text-amber-800 mb-1">Still not resolved?</p>
+                            <p className="text-[10px] text-amber-700 mb-2.5">
                               Raise a support ticket and our team will help you.
                             </p>
                             <Link
-                              to="/orders"
-                              className="inline-flex items-center gap-1.5 bg-primary text-white text-[11px] font-bold px-3 py-1.5 rounded-full"
+                              to="/help/complaint"
+                              className="inline-flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-lg"
                             >
                               <TicketCheck className="w-3 h-3" />
                               Raise a Support Ticket
@@ -291,15 +291,15 @@ export default function FaqPage() {
         <p className="text-white/70 text-xs mb-3">Our support team is here to help</p>
         <div className="flex gap-2">
           <Link
-            to="/orders"
-            className="flex-1 flex items-center justify-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
+            to="/help/complaint"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-lg"
           >
             <TicketCheck className="w-3.5 h-3.5" />
             Raise Ticket
           </Link>
           <Link
             to="/chat"
-            className="flex-1 flex items-center justify-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-2 rounded-full border border-white/30"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-2 rounded-lg border border-white/30"
           >
             Chat
           </Link>

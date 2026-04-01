@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Search, X, Package, Phone, ShieldCheck,
   AlertCircle, ChevronRight, Truck, User, MapPin,
@@ -516,7 +516,10 @@ function CustomerCard({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HelpComplaintPage() {
-  const [activeTab, setActiveTab] = useState<TabMode>("self");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabMode>(
+    searchParams.get("tab") === "customer" ? "customer" : "self"
+  );
 
   return (
     <div className="space-y-3 animate-fade-in pb-4">

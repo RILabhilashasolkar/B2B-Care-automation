@@ -24,10 +24,10 @@ export default function TicketDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-foreground">{ticket.id}</h1>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium priority-${ticket.priority.toLowerCase()}`}>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold priority-${ticket.priority.toLowerCase()}`}>
               {ticket.priority}
             </span>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
               ticket.status === "Open" ? "status-open" :
               ticket.status === "In Progress" ? "status-in-progress" :
               ticket.status === "Resolved" ? "status-resolved" :
@@ -36,13 +36,13 @@ export default function TicketDetailPage() {
               {ticket.status}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{ticket.category} → {ticket.subcategory} → {ticket.subSubcategory}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{ticket.category} → {ticket.subcategory} → {ticket.subSubcategory}</p>
         </div>
       </div>
 
       {/* Ticket Info */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="bg-card rounded-xl border border-border p-4">
+        <div className="grid grid-cols-2 gap-3 text-xs">
           <div><span className="text-muted-foreground">Created:</span> <span className="font-medium text-foreground">{new Date(ticket.createdAt).toLocaleString("en-IN")}</span></div>
           <div><span className="text-muted-foreground">Last Updated:</span> <span className="font-medium text-foreground">{new Date(ticket.updatedAt).toLocaleString("en-IN")}</span></div>
           {ticket.assignedTo && <div><span className="text-muted-foreground">Assigned To:</span> <span className="font-medium text-foreground">{ticket.assignedTo}</span></div>}
@@ -81,7 +81,7 @@ export default function TicketDetailPage() {
                 )}
               </div>
               <div className="pb-6">
-                <p className="text-sm text-foreground">{event.description}</p>
+                <p className="text-xs text-foreground">{event.description}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {event.actor} · {new Date(event.timestamp).toLocaleString("en-IN")}
                 </p>
@@ -92,15 +92,15 @@ export default function TicketDetailPage() {
       </div>
 
       {/* Add Comment */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Add Comment</h3>
+      <div className="bg-card rounded-xl border border-border p-4">
+        <h3 className="text-xs font-bold text-foreground mb-2.5">Add Comment</h3>
         <textarea
-          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+          className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none placeholder:text-muted-foreground"
           rows={3}
           placeholder="Type your message..."
         />
-        <div className="flex justify-end mt-3">
-          <button className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <div className="flex justify-end mt-2.5">
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:opacity-90 active:opacity-80 transition-opacity">
             Send
           </button>
         </div>
