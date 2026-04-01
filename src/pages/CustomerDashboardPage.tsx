@@ -32,10 +32,10 @@ function statusCls(status: string) {
 type TabKey = "all" | "order" | "service" | "complaint";
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
-  { key: "all",       label: "All",          icon: Hash },
-  { key: "order",     label: "Product",      icon: ShoppingBag },
-  { key: "service",   label: "Service",      icon: Wrench },
-  { key: "complaint", label: "Complaints",   icon: AlertOctagon },
+  { key: "all",       label: "All",                       icon: Hash },
+  { key: "order",     label: "Product Related",           icon: ShoppingBag },
+  { key: "service",   label: "Service Request",           icon: Wrench },
+  { key: "complaint", label: "Complaints Against Service", icon: AlertOctagon },
 ];
 
 export default function CustomerDashboardPage() {

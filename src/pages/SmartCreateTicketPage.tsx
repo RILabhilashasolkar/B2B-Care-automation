@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { mockOrders, mockCustomers, ticketCategories } from "../lib/mockData";
+import { mockOrders, mockCustomers, mockCustomerTickets, ticketCategories } from "../lib/mockData";
 import {
   ArrowLeft, Package, User, Phone, MapPin, ShieldCheck,
-  AlertCircle, ChevronRight, Upload, CheckCircle, Truck,
+  AlertCircle, ChevronRight, Upload, CheckCircle, Truck, Wrench,
 } from "lucide-react";
 
 // Maps actionType param → suggested category name in ticketCategories.customer
@@ -18,13 +18,15 @@ export default function SmartCreateTicketPage() {
   const [searchParams] = useSearchParams();
 
   // ── URL params ────────────────────────────────────────────────────────────
-  const orderId    = searchParams.get("orderId")    || "";
-  const itemId     = searchParams.get("itemId")     || "";
-  const shipmentId = searchParams.get("shipmentId") || "";
-  const customerId = searchParams.get("customerId") || "";
-  const actionType = searchParams.get("actionType") || "";
-  const level      = searchParams.get("level")      || "";  // "order" | "shipment" | ""
-  const source     = searchParams.get("source")     || "";  // "help" = came from /help/complaint
+  const orderId        = searchParams.get("orderId")        || "";
+  const itemId         = searchParams.get("itemId")         || "";
+  const shipmentId     = searchParams.get("shipmentId")     || "";
+  const customerId     = searchParams.get("customerId")     || "";
+  const actionType     = searchParams.get("actionType")     || "";
+  const level          = searchParams.get("level")          || "";  // "order" | "shipment" | ""
+  const source         = searchParams.get("source")         || "";  // "help" = came from /help/complaint
+  const relatedTicketId = searchParams.get("relatedTicket") || "";  // related service ticket id (for complaint-against-service)
+  const preCategory    = searchParams.get("category")       || "";  // pre-selected category from URL
 
   // ── Entry mode ────────────────────────────────────────────────────────────
   // "item"     → came from OrderDetailPage / ItemDetailPage with orderId+itemId+shipmentId
@@ -113,7 +115,12 @@ export default function SmartCreateTicketPage() {
     ? categories.filter((c) => LEVEL_CATS[level].includes(c.category))
     : categories;
 
-  const suggestedCategory = actionType ? (ACTION_CATEGORY[actionType] ?? "") : "";
+  const suggestedCategory = preCategory || (actionType ? (ACTION_CATEGORY[actionType] ?? "") : "");
+
+  // ── Related service ticket (complaint-against-service flow) ───────────────
+  const relatedTicketData = relatedTicketId
+    ? mockCustomerTickets.find((t) => t.id === relatedTicketId)
+    : undefined;
 
   // ── Form state ────────────────────────────────────────────────────────────
   const [step, setStep] = useState(1);
@@ -161,6 +168,13 @@ export default function SmartCreateTicketPage() {
     s === "Delivered"
       ? "bg-emerald-100 text-emerald-700"
       : "bg-blue-100 text-blue-700";
+
+  const ticketStatusBadge = (s: string) =>
+    s === "Open"          ? "bg-blue-100 text-blue-700" :
+    s === "In Progress"   ? "bg-amber-100 text-amber-700" :
+    s === "Awaiting Info" ? "bg-orange-100 text-orange-700" :
+    s === "Resolved"      ? "bg-emerald-100 text-emerald-700" :
+                            "bg-muted text-muted-foreground";
 
   const orderStatusBadge = (s: string) =>
     s === "Delivered"   ? "bg-emerald-100 text-emerald-700" :
@@ -521,6 +535,76 @@ export default function SmartCreateTicketPage() {
                 }`}>
                   {level === "shipment" ? shipment?.status : order.status}
                 </span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Service Details card — shown when raising complaint against a service request ── */}
+          {relatedTicketData && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3">
+              {/* Header */}
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <Wrench className="w-3.5 h-3.5 text-orange-600" />
+                </div>
+                <p className="text-xs font-bold text-orange-900 flex-1">Related Service Request</p>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${ticketStatusBadge(relatedTicketData.status)}`}>
+                  {relatedTicketData.status}
+                </span>
+              </div>
+
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ticket ID</p>
+                  <p className="text-[11px] font-mono font-bold text-foreground mt-0.5">{relatedTicketData.id}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Assigned To</p>
+                  <p className="text-xs text-foreground mt-0.5">{relatedTicketData.assignedTo || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Category</p>
+                  <p className="text-xs font-semibold text-foreground mt-0.5">{relatedTicketData.category}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sub-category</p>
+                  <p className="text-xs text-foreground mt-0.5">{relatedTicketData.subcategory}</p>
+                </div>
+                {relatedTicketData.subSubcategory && (
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Issue Type</p>
+                    <p className="text-xs text-foreground mt-0.5">{relatedTicketData.subSubcategory}</p>
+                  </div>
+                )}
+                {relatedTicketData.productName && (
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Product</p>
+                    <p className="text-xs font-semibold text-foreground mt-0.5">
+                      {relatedTicketData.productName}
+                      {relatedTicketData.serialNumber && (
+                        <span className="font-mono font-normal text-muted-foreground"> · {relatedTicketData.serialNumber}</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+                <div className="col-span-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Service Date</p>
+                  <p className="text-xs text-foreground mt-0.5">
+                    {new Date(relatedTicketData.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}
+                    {" · "}
+                    <span className="text-muted-foreground">Last updated </span>
+                    {new Date(relatedTicketData.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Complaint intent label */}
+              <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-2.5 py-2">
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                <p className="text-[11px] text-red-800 font-medium">
+                  Raising <span className="font-bold">Complaint Against Service</span> for this request
+                </p>
               </div>
             </div>
           )}
