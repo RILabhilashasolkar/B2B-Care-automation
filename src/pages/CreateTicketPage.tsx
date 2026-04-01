@@ -21,14 +21,15 @@ export default function CreateTicketPage({ type }: Props) {
     orderId: searchParams.get("orderId") || "",
     customerName: "",
     customerMobile: "",
-    productName: "",
-    serialNumber: "",
     attachments: [] as string[],
   });
 
   const categories = type === "self" ? ticketCategories.self : ticketCategories.customer;
   const selectedCat = categories.find((c) => c.category === form.category);
   const selectedSub = selectedCat?.subcategories.find((s) => s.name === form.subcategory);
+
+  // suppress unused variable warning for preCategory
+  void preCategory;
 
   const handleSubmit = () => {
     const ticketId = `TKT-${type === "self" ? "S" : "C"}-${String(Date.now()).slice(-4)}`;
@@ -46,19 +47,63 @@ export default function CreateTicketPage({ type }: Props) {
           <h1 className="text-base font-bold text-foreground">
             {type === "self" ? "Raise Self Complaint" : "Raise Customer Ticket"}
           </h1>
-          <p className="text-sm text-muted-foreground">Step {step} of 3</p>
+          <p className="text-sm text-muted-foreground">Step {step} of 4</p>
         </div>
       </div>
 
       {/* Progress */}
       <div className="flex gap-1">
-        {[1, 2, 3].map((s) => (
+        {[1, 2, 3, 4].map((s) => (
           <div key={s} className={`h-1 flex-1 rounded-full ${s <= step ? "bg-primary" : "bg-border"}`} />
         ))}
       </div>
 
-      {/* Step 1: Category Selection */}
+      {/* Step 1: Order Details */}
       {step === 1 && (
+        <div className="space-y-4">
+          <h2 className="text-sm font-bold text-foreground">Order Details</h2>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Order ID *</label>
+            <input
+              value={form.orderId}
+              onChange={(e) => setForm({ ...form, orderId: e.target.value })}
+              className="w-full px-3 py-2.5 bg-card border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="e.g. ORD-2024-001847"
+            />
+          </div>
+          {type === "customer" && (
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Customer Mobile Number *</label>
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-card border border-border rounded-xl">
+                <span className="text-xs text-muted-foreground font-medium">+91</span>
+                <input
+                  value={form.customerMobile}
+                  onChange={(e) => setForm({ ...form, customerMobile: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                  className="flex-1 text-xs bg-transparent focus:outline-none"
+                  placeholder="10-digit mobile number"
+                />
+              </div>
+              {/* Mock existing customer lookup */}
+              {form.customerMobile.length === 10 && (
+                <div className="mt-2 bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-green-800">Customer Found</p>
+                  <p className="text-xs text-green-700 mt-0.5">Rajesh Kumar · Mumbai · 2 previous tickets</p>
+                </div>
+              )}
+            </div>
+          )}
+          <button
+            onClick={() => form.orderId ? setStep(2) : null}
+            disabled={!form.orderId}
+            className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-semibold disabled:opacity-50"
+          >
+            Continue
+          </button>
+        </div>
+      )}
+
+      {/* Step 2: Category Selection */}
+      {step === 2 && (
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-foreground">Select Category</h2>
           <div className="space-y-2">
@@ -121,53 +166,19 @@ export default function CreateTicketPage({ type }: Props) {
 
           {form.subSubcategory && (
             <button
-              onClick={() => setStep(2)}
+              onClick={() => setStep(3)}
               className="mt-4 px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
             >
-              Continue
+              Continue <ChevronRight className="inline w-4 h-4" />
             </button>
           )}
         </div>
       )}
 
-      {/* Step 2: Details */}
-      {step === 2 && (
+      {/* Step 3: Details */}
+      {step === 3 && (
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-foreground">Provide Details</h2>
-
-          {type === "customer" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Customer Name *</label>
-                <input required value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Customer name" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Mobile Number *</label>
-                <input required value={form.customerMobile} onChange={(e) => setForm({ ...form, customerMobile: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="10-digit mobile" />
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Product Name</label>
-              <input value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })}
-                className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Product name" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Serial Number</label>
-              <input value={form.serialNumber} onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
-                className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Serial number" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Order / Reference ID</label>
-            <input value={form.orderId} onChange={(e) => setForm({ ...form, orderId: e.target.value })}
-              className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="e.g. ORD-2024-001847" />
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">Issue Description *</label>
@@ -185,30 +196,27 @@ export default function CreateTicketPage({ type }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button onClick={() => setStep(3)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+            <button onClick={() => setStep(4)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
               Review & Submit
             </button>
-            <button onClick={() => setStep(1)} className="px-6 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors">
+            <button onClick={() => setStep(2)} className="px-6 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors">
               Back
             </button>
           </div>
         </div>
       )}
 
-      {/* Step 3: Review */}
-      {step === 3 && (
+      {/* Step 4: Review */}
+      {step === 4 && (
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-foreground">Review & Confirm</h2>
           <div className="bg-card rounded-xl border border-border p-5 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-sm">
+              {form.orderId && <div><span className="text-muted-foreground">Order ID:</span> <span className="font-medium text-foreground">{form.orderId}</span></div>}
+              {form.customerMobile && <div><span className="text-muted-foreground">Mobile:</span> <span className="font-medium text-foreground">{form.customerMobile}</span></div>}
               <div><span className="text-muted-foreground">Category:</span> <span className="font-medium text-foreground">{form.category}</span></div>
               <div><span className="text-muted-foreground">Subcategory:</span> <span className="font-medium text-foreground">{form.subcategory}</span></div>
               <div><span className="text-muted-foreground">Issue Type:</span> <span className="font-medium text-foreground">{form.subSubcategory}</span></div>
-              {form.orderId && <div><span className="text-muted-foreground">Order ID:</span> <span className="font-medium text-foreground">{form.orderId}</span></div>}
-              {form.productName && <div><span className="text-muted-foreground">Product:</span> <span className="font-medium text-foreground">{form.productName}</span></div>}
-              {form.serialNumber && <div><span className="text-muted-foreground">Serial No:</span> <span className="font-medium text-foreground">{form.serialNumber}</span></div>}
-              {form.customerName && <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium text-foreground">{form.customerName}</span></div>}
-              {form.customerMobile && <div><span className="text-muted-foreground">Mobile:</span> <span className="font-medium text-foreground">{form.customerMobile}</span></div>}
             </div>
             {form.description && (
               <div className="pt-3 border-t border-border">
@@ -222,7 +230,7 @@ export default function CreateTicketPage({ type }: Props) {
             <button onClick={handleSubmit} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
               Submit Ticket
             </button>
-            <button onClick={() => setStep(2)} className="px-6 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors">
+            <button onClick={() => setStep(3)} className="px-6 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-accent transition-colors">
               Back
             </button>
           </div>

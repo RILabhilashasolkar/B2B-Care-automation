@@ -155,8 +155,8 @@ export default function FaqPage() {
     <div className="animate-fade-in pb-4 -mx-4 -mt-4">
       {/* Header */}
       <div className="bg-gradient-to-br from-primary to-blue-700 px-4 pt-5 pb-6 text-white">
-        <h1 className="text-lg font-bold mb-0.5">Frequently Asked Questions</h1>
-        <p className="text-xs text-white/75 mb-4">Find quick answers to common issues</p>
+        <h1 className="text-lg font-bold mb-0.5">Knowledge Base</h1>
+        <p className="text-xs text-white/75 mb-4">Browse articles &amp; guides</p>
         {/* Search */}
         <div className="flex items-center gap-2 bg-white/15 border border-white/25 rounded-xl px-4 py-2.5">
           <Search className="w-4 h-4 text-white/70 flex-shrink-0" />
@@ -209,7 +209,7 @@ export default function FaqPage() {
                 </div>
                 <span className="text-sm font-bold text-foreground">{cat.category}</span>
                 <span className="ml-auto text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {cat.items.length} FAQs
+                  {cat.items.length} Articles
                 </span>
               </div>
 
@@ -301,7 +301,7 @@ export default function FaqPage() {
             to="/chat"
             className="flex-1 flex items-center justify-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-2 rounded-full border border-white/30"
           >
-            Live Chat
+            Live Call
           </Link>
         </div>
       </div>

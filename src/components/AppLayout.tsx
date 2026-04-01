@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   ShoppingBag,
   Headphones,
   Menu,
@@ -15,13 +14,10 @@ import {
   Search,
   Home,
   Briefcase,
-  ClipboardList,
   LifeBuoy,
 } from "lucide-react";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "My Orders", icon: ShoppingBag, path: "/orders" },
   {
     label: "Self Help & Service",
     icon: Headphones,
@@ -29,15 +25,14 @@ const navItems = [
     children: [
       { label: "Self", icon: User, path: "/service/self" },
       { label: "My Customer", icon: Users, path: "/service/customer" },
-      { label: "SO Lookup", icon: ClipboardList, path: "/service/lookup" },
     ],
   },
 ];
 
 const bottomTabs = [
-  { label: "Home", icon: Home, path: "/" },
   { label: "Orders", icon: ShoppingBag, path: "/orders" },
   { label: "Support", icon: LifeBuoy, path: "/help" },
+  { label: "Home", icon: Home, path: "/" },
   { label: "Customers", icon: Users, path: "/service/customer" },
   { label: "My Business", icon: Briefcase, path: "/my-business" },
 ];
@@ -52,7 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isTabActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
-    if (path === "/help") return location.pathname === "/help" || location.pathname === "/faq" || location.pathname === "/chat" || location.pathname.startsWith("/service");
+    if (path === "/help") return location.pathname === "/help" || location.pathname === "/faq" || location.pathname === "/chat";
     return location.pathname.startsWith(path);
   };
 

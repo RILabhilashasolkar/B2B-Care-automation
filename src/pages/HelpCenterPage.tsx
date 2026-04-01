@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Headphones, Users, Search, HelpCircle, MessageCircle, Phone,
+  Headphones, Users, Search, HelpCircle, Phone,
   Zap, Wrench, Truck, FileText, RotateCcw, Store,
   TicketCheck, ChevronRight, TrendingUp, ArrowRight
 } from "lucide-react";
@@ -8,9 +8,8 @@ import {
 const QUICK_ACTIONS = [
   { label: "Self Help", desc: "My purchase issues", icon: Headphones, path: "/service/self", bg: "bg-blue-50", color: "text-blue-600" },
   { label: "My Customers", desc: "Customer service hub", icon: Users, path: "/service/customer", bg: "bg-violet-50", color: "text-violet-600" },
-  { label: "SO Lookup", desc: "Service order status", icon: Search, path: "/service/lookup", bg: "bg-emerald-50", color: "text-emerald-600" },
-  { label: "FAQ", desc: "Quick answers", icon: HelpCircle, path: "/faq", bg: "bg-amber-50", color: "text-amber-600" },
-  { label: "Live Chat", desc: "Chat with JMD bot", icon: MessageCircle, path: "/chat", bg: "bg-green-50", color: "text-green-600" },
+  { label: "Knowledge Base", desc: "Browse articles", icon: HelpCircle, path: "/faq", bg: "bg-amber-50", color: "text-amber-600" },
+  { label: "Live Call", desc: "Call JMD support", icon: Phone, path: "/chat", bg: "bg-green-50", color: "text-green-600" },
   { label: "Call Us", desc: "1800-XXX-XXXX", icon: Phone, path: "/faq", bg: "bg-pink-50", color: "text-pink-600" },
 ];
 
@@ -21,7 +20,7 @@ const CATEGORIES = [
   { label: "Billing & Invoices", count: 284, icon: FileText, bg: "bg-amber-50", color: "text-amber-600", path: "/service/self/create" },
   { label: "Refunds & Returns", count: 284, icon: RotateCcw, bg: "bg-red-50", color: "text-red-600", path: "/service/self/create" },
   { label: "Store Related", count: 20, icon: Store, bg: "bg-teal-50", color: "text-teal-600", path: "/service/self/create" },
-  { label: "SO Follow-up", count: 94, icon: Search, bg: "bg-violet-50", color: "text-violet-600", path: "/service/lookup" },
+  { label: "SO Follow-up", count: 94, icon: Search, bg: "bg-violet-50", color: "text-violet-600", path: "/service/customer" },
   { label: "Other Issues", count: 115, icon: HelpCircle, bg: "bg-gray-50", color: "text-gray-500", path: "/service/self/create" },
 ];
 
@@ -120,7 +119,7 @@ export default function HelpCenterPage() {
       {/* Frequently Asked */}
       <div className="px-4 pt-3 pb-1 flex items-center justify-between">
         <h2 className="text-sm font-bold text-foreground">Frequently Asked</h2>
-        <Link to="/faq" className="text-xs text-primary font-semibold">See All FAQs</Link>
+        <Link to="/faq" className="text-xs text-primary font-semibold">See All</Link>
       </div>
       <div className="mx-4 bg-white rounded-xl shadow-sm border border-border overflow-hidden">
         {TOP_FAQ.map((item, i) => (
@@ -156,8 +155,8 @@ export default function HelpCenterPage() {
           to="/chat"
           className="flex items-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
         >
-          <MessageCircle className="w-3.5 h-3.5" />
-          Live Chat
+          <Phone className="w-3.5 h-3.5" />
+          Live Call
         </Link>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { mockSelfTickets } from "../lib/mockData";
 import { Plus, Search, Filter, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-const statusFilters = ["All", "Open", "In Progress", "Awaiting Info", "Resolved", "Closed"];
+const statusFilters = ["All", "Open", "In Progress", "Resolved", "Closed", "Reopen"];
 
 export default function SelfDashboardPage() {
   const [search, setSearch] = useState("");
@@ -14,7 +14,8 @@ export default function SelfDashboardPage() {
     const matchesSearch = t.id.toLowerCase().includes(search.toLowerCase()) ||
       t.category.toLowerCase().includes(search.toLowerCase()) ||
       t.description.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || t.status === statusFilter;
+    const matchesStatus = statusFilter === "All" || t.status === statusFilter ||
+      (statusFilter === "Reopen" && t.status === "Reopened");
     return matchesSearch && matchesStatus;
   });
 
@@ -64,7 +65,7 @@ export default function SelfDashboardPage() {
         {[
           { label: "Open", count: mockSelfTickets.filter((t) => t.status === "Open").length, cls: "text-blue-600" },
           { label: "In Prog.", count: mockSelfTickets.filter((t) => t.status === "In Progress").length, cls: "text-amber-600" },
-          { label: "Awaiting", count: mockSelfTickets.filter((t) => t.status === "Awaiting Info").length, cls: "text-red-600" },
+          { label: "Reopen", count: mockSelfTickets.filter((t) => t.status === "Reopened").length, cls: "text-orange-600" },
           { label: "Resolved", count: mockSelfTickets.filter((t) => t.status === "Resolved").length, cls: "text-green-700" },
         ].map((s) => (
           <div key={s.label} className="bg-card rounded-lg border border-border p-2 text-center">
@@ -95,13 +96,17 @@ export default function SelfDashboardPage() {
                     ticket.status === "Open" ? "status-open" :
                     ticket.status === "In Progress" ? "status-in-progress" :
                     ticket.status === "Resolved" ? "status-resolved" :
-                    ticket.status === "Awaiting Info" ? "status-awaiting" : "status-closed"
+                    ticket.status === "Awaiting Info" ? "status-awaiting" :
+                    ticket.status === "Reopened" ? "status-open" : "status-closed"
                   }`}>
                     {ticket.status}
                   </span>
                 </div>
                 <p className="text-xs font-medium text-foreground truncate">{ticket.category} → {ticket.subcategory}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{ticket.description}</p>
+                {ticket.status === "Closed" && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5 italic">Closed: Issue resolved and confirmed by retailer.</p>
+                )}
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   {new Date(ticket.createdAt).toLocaleDateString("en-IN")}
                   {ticket.assignedTo && ` · ${ticket.assignedTo}`}

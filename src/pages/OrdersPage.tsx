@@ -4,23 +4,17 @@ import { Package, ChevronRight, Search, SlidersHorizontal, X, ChevronDown } from
 import { useState } from "react";
 
 type Filters = {
-  product: string;
   brand: string;
   productFamily: string;
-  sku: string;
-  serialNumber: string;
   soStatus: string;
-  installStatus: string;
 };
 
 const EMPTY_FILTERS: Filters = {
-  product: "", brand: "", productFamily: "",
-  sku: "", serialNumber: "", soStatus: "", installStatus: "",
+  brand: "", productFamily: "", soStatus: "",
 };
 
 const FILTER_LABELS: Record<keyof Filters, string> = {
-  product: "Product", brand: "Brand", productFamily: "Product Family",
-  sku: "SKU", serialNumber: "Serial No.", soStatus: "SO Status", installStatus: "Installation",
+  brand: "Brand", productFamily: "Product Family", soStatus: "SO Status",
 };
 
 export default function OrdersPage() {
@@ -41,21 +35,10 @@ export default function OrdersPage() {
     return "pending";
   };
 
-  const getItemInstallStatus = (item: OrderItem) => {
-    if (item.installationNotByUs) return "not_by_us";
-    if (item.installationRequested) return "requested";
-    if (item.installationEligible) return "eligible";
-    return "not_eligible";
-  };
-
   const itemMatchesFilters = (item: OrderItem) => {
-    if (applied.product && !item.name.toLowerCase().includes(applied.product.toLowerCase())) return false;
     if (applied.brand && item.brand !== applied.brand) return false;
     if (applied.productFamily && item.productFamily !== applied.productFamily) return false;
-    if (applied.sku && !item.sku.toLowerCase().includes(applied.sku.toLowerCase())) return false;
-    if (applied.serialNumber && !item.serialNumber.toLowerCase().includes(applied.serialNumber.toLowerCase())) return false;
     if (applied.soStatus && applied.soStatus !== getItemSoStatus(item)) return false;
-    if (applied.installStatus && applied.installStatus !== getItemInstallStatus(item)) return false;
     return true;
   };
 
@@ -98,7 +81,7 @@ export default function OrdersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by Order ID..."
+            placeholder="Search by Order ID or Shipment ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -230,17 +213,8 @@ export default function OrdersPage() {
             {/* Filter fields — scrollable */}
             <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
 
-              {/* Row 1: Product + Brand */}
+              {/* Row 1: Brand */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Product Name</label>
-                  <input
-                    value={draft.product}
-                    onChange={(e) => setDraft({ ...draft, product: e.target.value })}
-                    placeholder="e.g. Samsung TV"
-                    className={inputCls}
-                  />
-                </div>
                 <div>
                   <label className={labelCls}>Brand</label>
                   <div className="relative">
@@ -255,10 +229,8 @@ export default function OrdersPage() {
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   </div>
                 </div>
-              </div>
 
-              {/* Row 2: Product Family + SKU */}
-              <div className="grid grid-cols-2 gap-3">
+                {/* Row 2: Product Family */}
                 <div>
                   <label className={labelCls}>Product Family</label>
                   <div className="relative">
@@ -273,62 +245,23 @@ export default function OrdersPage() {
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   </div>
                 </div>
-                <div>
-                  <label className={labelCls}>SKU</label>
-                  <input
-                    value={draft.sku}
-                    onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
-                    placeholder="e.g. SAM-TV-55CU"
-                    className={inputCls}
-                  />
-                </div>
               </div>
 
-              {/* Row 3: Serial Number — full width */}
+              {/* Row 3: SO Status */}
               <div>
-                <label className={labelCls}>Serial Number</label>
-                <input
-                  value={draft.serialNumber}
-                  onChange={(e) => setDraft({ ...draft, serialNumber: e.target.value })}
-                  placeholder="e.g. ag29jdba90"
-                  className={inputCls}
-                />
-              </div>
-
-              {/* Row 4: SO Status + Installation */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>SO Status</label>
-                  <div className="relative">
-                    <select
-                      value={draft.soStatus}
-                      onChange={(e) => setDraft({ ...draft, soStatus: e.target.value })}
-                      className={inputCls + " appearance-none pr-7"}
-                    >
-                      <option value="">All</option>
-                      <option value="so_created">SO Created</option>
-                      <option value="not_done_by_us">Not Done by Us</option>
-                      <option value="pending">Pending SO</option>
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                  </div>
-                </div>
-                <div>
-                  <label className={labelCls}>Installation</label>
-                  <div className="relative">
-                    <select
-                      value={draft.installStatus}
-                      onChange={(e) => setDraft({ ...draft, installStatus: e.target.value })}
-                      className={inputCls + " appearance-none pr-7"}
-                    >
-                      <option value="">All</option>
-                      <option value="requested">Requested</option>
-                      <option value="eligible">Pending</option>
-                      <option value="not_by_us">Not by Us</option>
-                      <option value="not_eligible">Not Eligible</option>
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                  </div>
+                <label className={labelCls}>SO Status</label>
+                <div className="relative">
+                  <select
+                    value={draft.soStatus}
+                    onChange={(e) => setDraft({ ...draft, soStatus: e.target.value })}
+                    className={inputCls + " appearance-none pr-7"}
+                  >
+                    <option value="">All</option>
+                    <option value="so_created">SO Created</option>
+                    <option value="not_done_by_us">Not Done by Us</option>
+                    <option value="pending">Pending SO</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                 </div>
               </div>
             </div>
