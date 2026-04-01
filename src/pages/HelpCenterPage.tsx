@@ -9,13 +9,15 @@ import {
   mockOrders, mockSelfTickets, mockCustomerTickets
 } from "../lib/mockData";
 
+const CALL_CENTRE = "tel:18001234567";
+
 // ── Quick Actions ─────────────────────────────────────────────────────────────
-const QUICK_ACTIONS = [
+const QUICK_ACTIONS: Array<{ label: string; desc: string; icon: typeof Phone; path?: string; tel?: string; bg: string; color: string }> = [
   { label: "Self Help",     desc: "My purchase issues",     icon: Headphones,    path: "/service/self",     bg: "bg-blue-50",    color: "text-blue-600" },
   { label: "My Customers",  desc: "Customer service hub",   icon: Users,         path: "/service/customer", bg: "bg-violet-50",  color: "text-violet-600" },
   { label: "Knowledge Base",desc: "Browse articles",        icon: HelpCircle,    path: "/faq",              bg: "bg-amber-50",   color: "text-amber-600" },
   { label: "Chat",          desc: "Chat with JMD support",  icon: MessageCircle, path: "/chat",             bg: "bg-green-50",   color: "text-green-600" },
-  { label: "Call Us",       desc: "1800-XXX-XXXX",          icon: Phone,         path: "/faq",              bg: "bg-pink-50",    color: "text-pink-600" },
+  { label: "Call Us",       desc: "1800-XXX-XXXX",          icon: Phone,         tel: CALL_CENTRE,          bg: "bg-pink-50",    color: "text-pink-600" },
 ];
 
 const TOP_FAQ = [
@@ -234,18 +236,22 @@ export default function HelpCenterPage() {
       {/* Quick Actions — 5 items */}
       <div className="px-4 pt-4 pb-2">
         <div className="grid grid-cols-3 gap-2.5">
-          {QUICK_ACTIONS.map((a) => (
-            <Link
-              key={a.path + a.label}
-              to={a.path}
-              className="bg-white rounded-xl p-3 flex flex-col items-center gap-2 shadow-sm border border-border active:scale-95 transition-transform"
-            >
-              <div className={`w-10 h-10 rounded-xl ${a.bg} flex items-center justify-center`}>
-                <a.icon className={`w-5 h-5 ${a.color}`} />
-              </div>
-              <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{a.label}</span>
-            </Link>
-          ))}
+          {QUICK_ACTIONS.map((a) => {
+            const cls = "bg-white rounded-xl p-3 flex flex-col items-center gap-2 shadow-sm border border-border active:scale-95 transition-transform";
+            const inner = (
+              <>
+                <div className={`w-10 h-10 rounded-xl ${a.bg} flex items-center justify-center`}>
+                  <a.icon className={`w-5 h-5 ${a.color}`} />
+                </div>
+                <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{a.label}</span>
+              </>
+            );
+            return a.tel ? (
+              <a key={a.label} href={a.tel} className={cls}>{inner}</a>
+            ) : (
+              <Link key={a.label} to={a.path!} className={cls}>{inner}</Link>
+            );
+          })}
         </div>
       </div>
 
@@ -367,13 +373,13 @@ export default function HelpCenterPage() {
           <p className="text-white font-bold text-sm">Still need help?</p>
           <p className="text-white/70 text-xs mt-0.5">Talk to our support team</p>
         </div>
-        <Link
-          to="/chat"
+        <a
+          href={CALL_CENTRE}
           className="flex items-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
         >
           <Phone className="w-3.5 h-3.5" />
           Call Us
-        </Link>
+        </a>
       </div>
     </div>
   );
