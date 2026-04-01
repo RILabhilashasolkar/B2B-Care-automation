@@ -371,8 +371,8 @@ export default function HelpCenterPage() {
           to="/chat"
           className="flex items-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
         >
-          <MessageCircle className="w-3.5 h-3.5" />
-          Chat
+          <Phone className="w-3.5 h-3.5" />
+          Call Us
         </Link>
       </div>
     </div>
