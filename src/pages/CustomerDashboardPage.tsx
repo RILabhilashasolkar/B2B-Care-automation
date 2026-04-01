@@ -1,13 +1,49 @@
 import { Link, useNavigate } from "react-router-dom";
 import { mockCustomerTickets, mockCustomers } from "../lib/mockData";
-import { Plus, Search, ChevronRight, Phone, Hash, Wrench, X } from "lucide-react";
+import {
+  Plus, Search, ChevronRight, Phone, Hash, Wrench,
+  X, ShoppingBag, AlertOctagon, MessageSquareWarning,
+} from "lucide-react";
 import { useState } from "react";
 
+// ── Ticket type classifier ────────────────────────────────────────────────────
+const ORDER_CATEGORIES  = new Set(["Order Issues", "Delivery Issues", "Billing & Payments", "Returns & Refunds", "Returns"]);
+const SERVICE_CATEGORIES = new Set(["Installation", "Repair & Service"]);
+const COMPLAINT_CATEGORIES = new Set(["Complaint Against Service"]);
+
+type TicketKind = "order" | "service" | "complaint";
+
+function classifyTicket(category: string): TicketKind {
+  if (ORDER_CATEGORIES.has(category))    return "order";
+  if (SERVICE_CATEGORIES.has(category))  return "service";
+  if (COMPLAINT_CATEGORIES.has(category)) return "complaint";
+  return "service"; // fallback
+}
+
+// ── Status badge helper ───────────────────────────────────────────────────────
+function statusCls(status: string) {
+  if (status === "Open")          return "status-open";
+  if (status === "In Progress")   return "status-in-progress";
+  if (status === "Awaiting Info") return "status-awaiting";
+  if (status === "Resolved")      return "status-resolved";
+  return "status-closed";
+}
+
+type TabKey = "all" | "order" | "service" | "complaint";
+
+const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+  { key: "all",       label: "All",          icon: Hash },
+  { key: "order",     label: "Order",        icon: ShoppingBag },
+  { key: "service",   label: "Service",      icon: Wrench },
+  { key: "complaint", label: "Complaints",   icon: AlertOctagon },
+];
+
 export default function CustomerDashboardPage() {
-  const [search, setSearch] = useState("");
-  const [searchType, setSearchType] = useState<"mobile" | "serial" | "ticket">("mobile");
+  const [search, setSearch]             = useState("");
+  const [searchType, setSearchType]     = useState<"mobile" | "serial" | "ticket">("mobile");
   const [searchResult, setSearchResult] = useState<typeof mockCustomers[0] | null>(null);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched]         = useState(false);
+  const [activeTab, setActiveTab]       = useState<TabKey>("all");
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -29,7 +65,23 @@ export default function CustomerDashboardPage() {
     ? mockCustomerTickets.filter((t) => t.id.toLowerCase().includes(search.toLowerCase()))
     : [];
 
-  const displayTickets = mockCustomerTickets;
+  // Categorise all tickets
+  const orderTickets    = mockCustomerTickets.filter((t) => classifyTicket(t.category) === "order");
+  const serviceTickets  = mockCustomerTickets.filter((t) => classifyTicket(t.category) === "service");
+  const complaintTickets = mockCustomerTickets.filter((t) => classifyTicket(t.category) === "complaint");
+
+  const visibleTickets =
+    activeTab === "all"       ? mockCustomerTickets :
+    activeTab === "order"     ? orderTickets :
+    activeTab === "service"   ? serviceTickets :
+                                complaintTickets;
+
+  const counts: Record<TabKey, number> = {
+    all:       mockCustomerTickets.length,
+    order:     orderTickets.length,
+    service:   serviceTickets.length,
+    complaint: complaintTickets.length,
+  };
 
   return (
     <div className="space-y-3 animate-fade-in">
@@ -171,52 +223,141 @@ export default function CustomerDashboardPage() {
         )}
       </div>
 
-      {/* All Tickets */}
+      {/* ── All Tickets section with type tabs ── */}
       <div>
+        {/* Section header */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-foreground">All Tickets ({displayTickets.length})</h3>
+          <h3 className="text-xs font-bold text-foreground">All Tickets ({mockCustomerTickets.length})</h3>
         </div>
+
+        {/* Type tabs */}
+        <div className="flex gap-1.5 mb-2 overflow-x-auto phone-scroll pb-0.5">
+          {TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${
+                activeTab === key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card border border-border text-foreground"
+              }`}
+            >
+              <Icon className="w-3 h-3" />
+              {label}
+              {counts[key] > 0 && (
+                <span className={`ml-0.5 text-[9px] font-bold px-1 rounded-full ${
+                  activeTab === key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                }`}>
+                  {counts[key]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab description strip */}
+        {activeTab === "order" && (
+          <div className="flex items-center gap-1.5 mb-2 px-0.5">
+            <ShoppingBag className="w-3 h-3 text-blue-500" />
+            <p className="text-[10px] text-muted-foreground">Order, delivery & billing complaints raised for customers</p>
+          </div>
+        )}
+        {activeTab === "service" && (
+          <div className="flex items-center gap-1.5 mb-2 px-0.5">
+            <Wrench className="w-3 h-3 text-teal-500" />
+            <p className="text-[10px] text-muted-foreground">Installation & repair requests · Raise a complaint if service was unsatisfactory</p>
+          </div>
+        )}
+        {activeTab === "complaint" && (
+          <div className="flex items-center gap-1.5 mb-2 px-0.5">
+            <AlertOctagon className="w-3 h-3 text-red-500" />
+            <p className="text-[10px] text-muted-foreground">Escalations against a service order that wasn't resolved properly</p>
+          </div>
+        )}
+
+        {/* Ticket list */}
         <div className="bg-card rounded-xl border border-border divide-y divide-border">
-          {displayTickets.length === 0 ? (
+          {visibleTickets.length === 0 ? (
             <div className="px-4 py-8 text-center text-xs text-muted-foreground">
-              No tickets yet. Create one from Create Complaint.
+              No {activeTab === "all" ? "" : activeTab === "order" ? "order " : activeTab === "service" ? "service " : "complaint "}tickets yet.
             </div>
           ) : (
-            displayTickets.map((ticket) => (
-              <Link
-                key={ticket.id}
-                to={`/ticket/${ticket.id}`}
-                className="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors group"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                    <span className="text-[11px] font-bold text-primary">{ticket.id}</span>
-                    {ticket.category === "Installation" && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-primary/10 text-primary">
-                        <Wrench className="w-2.5 h-2.5 inline mr-0.5" />Install
+            visibleTickets.map((ticket) => {
+              const kind = classifyTicket(ticket.category);
+              return (
+                <div key={ticket.id} className="group">
+                  <Link
+                    to={`/ticket/${ticket.id}`}
+                    className="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      {/* Badge row */}
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="text-[11px] font-bold text-primary">{ticket.id}</span>
+
+                        {/* Kind badge */}
+                        {kind === "order" && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            <ShoppingBag className="w-2.5 h-2.5" /> Order
+                          </span>
+                        )}
+                        {kind === "service" && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                            <Wrench className="w-2.5 h-2.5" /> Service
+                          </span>
+                        )}
+                        {kind === "complaint" && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-700 border border-red-200">
+                            <AlertOctagon className="w-2.5 h-2.5" /> Complaint
+                          </span>
+                        )}
+
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold priority-${ticket.priority.toLowerCase()}`}>
+                          {ticket.priority}
+                        </span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${statusCls(ticket.status)}`}>
+                          {ticket.status}
+                        </span>
+                      </div>
+
+                      {/* Content rows */}
+                      <p className="text-xs font-medium text-foreground truncate">
+                        {ticket.customerName} — {ticket.category} → {ticket.subcategory}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                        {ticket.productName} · {ticket.serialNumber}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Created {new Date(ticket.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })} · {ticket.assignedTo}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary ml-3 flex-shrink-0" />
+                  </Link>
+
+                  {/* ── Quick action: Raise Complaint Against Service (only on service tickets) ── */}
+                  {kind === "service" && ticket.status !== "Resolved" && ticket.status !== "Closed" && (
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/ticket/create?customerId=${
+                            mockCustomers.find((c) => c.mobile === ticket.customerMobile)?.id ?? ""
+                          }&category=Complaint+Against+Service&relatedTicket=${ticket.id}&serialNumber=${ticket.serialNumber ?? ""}`
+                        )
+                      }
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-red-50 border-t border-red-100 hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <MessageSquareWarning className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                        <span className="text-[10px] font-semibold text-red-700">Raise Complaint Against This Service</span>
+                      </div>
+                      <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full border border-red-200 font-semibold flex-shrink-0">
+                        {ticket.id}
                       </span>
-                    )}
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold priority-${ticket.priority.toLowerCase()}`}>
-                      {ticket.priority}
-                    </span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
-                      ticket.status === "Open"          ? "status-open" :
-                      ticket.status === "In Progress"   ? "status-in-progress" :
-                      ticket.status === "Awaiting Info" ? "status-awaiting" :
-                      ticket.status === "Resolved"      ? "status-resolved" : "status-closed"
-                    }`}>
-                      {ticket.status}
-                    </span>
-                  </div>
-                  <p className="text-xs font-medium text-foreground truncate">{ticket.customerName} — {ticket.category} → {ticket.subcategory}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{ticket.productName} · {ticket.serialNumber}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Created {new Date(ticket.createdAt).toLocaleDateString("en-IN")} · {ticket.assignedTo}
-                  </p>
+                    </button>
+                  )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary ml-3 flex-shrink-0" />
-              </Link>
-            ))
+              );
+            })
           )}
         </div>
       </div>
