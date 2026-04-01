@@ -43,8 +43,21 @@ const EMPTY_FILTERS: InstallFilters = {
   dateTo: "",
 };
 
-// Product detail options — only relevant for Air Conditioner
-const AC_PRODUCT_DETAILS = ["1 Ton", "1.5 Ton", "2 Ton", "Split AC", "Window AC"];
+// Product detail options — per brand × product family (cascading)
+const PRODUCT_DETAIL_MAP: Record<string, Record<string, string[]>> = {
+  Samsung: {
+    Television:       ["Crystal UHD", "QLED", "4K", "Full HD"],
+  },
+  LG: {
+    "Air Conditioner": ["1 Ton", "1.5 Ton", "2 Ton", "Split AC", "Window AC", "Inverter AC"],
+  },
+  Whirlpool: {
+    Refrigerator:     ["Single Door", "Double Door", "Frost Free", "Direct Cool"],
+  },
+  Havells: {
+    Fan:              ["Ceiling Fan", "Table Fan", "Wall Fan", "Exhaust Fan"],
+  },
+};
 
 // ── CreateInstallationModal ───────────────────────────────────────────────────
 function CreateInstallationModal({
@@ -346,8 +359,12 @@ export default function HelpInstallationPage() {
     ).map((p) => p.item.productFamily)
   )];
 
-  // Product Detail dropdown only shown when Air Conditioner is selected
-  const showProductDetail = draft.productFamily === "Air Conditioner";
+  // Product detail options depend on selected brand + product family
+  const availableDetails: string[] =
+    draft.brand && draft.productFamily
+      ? (PRODUCT_DETAIL_MAP[draft.brand]?.[draft.productFamily] ?? [])
+      : [];
+  const showProductDetail = availableDetails.length > 0;
 
   // ── Filter logic ──────────────────────────────────────────────────────────
   const searchTrimmed = search.trim().toLowerCase();
@@ -369,18 +386,16 @@ export default function HelpInstallationPage() {
     // Family filter
     if (applied.productFamily && p.item.productFamily !== applied.productFamily) return false;
 
-    // Product detail filter (AC sub-filter)
-    if (applied.productDetail && applied.productFamily === "Air Conditioner") {
+    // Product detail filter (matches against item name, works for all families)
+    if (applied.productDetail) {
       const nameLower = p.item.name.toLowerCase();
-      let match = false;
-      switch (applied.productDetail) {
-        case "1 Ton":    match = nameLower.includes("1 ton") && !nameLower.includes("1.5"); break;
-        case "1.5 Ton":  match = nameLower.includes("1.5 ton"); break;
-        case "2 Ton":    match = nameLower.includes("2 ton"); break;
-        case "Split AC": match = nameLower.includes("split"); break;
-        case "Window AC":match = nameLower.includes("window"); break;
-      }
-      if (!match) return false;
+      const detailLower = applied.productDetail.toLowerCase();
+      // Special case: "1 Ton" must not match "1.5 Ton" items
+      const matches =
+        applied.productDetail === "1 Ton"
+          ? nameLower.includes("1 ton") && !nameLower.includes("1.5")
+          : nameLower.includes(detailLower);
+      if (!matches) return false;
     }
 
     // Delivery date range filter
@@ -804,12 +819,14 @@ export default function HelpInstallationPage() {
                 </div>
               </div>
 
-              {/* Row 4: Product Details (only for Air Conditioner) */}
+              {/* Row 4: Product Details (options depend on brand + family) */}
               {showProductDetail && (
                 <div>
                   <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5">
                     Product Details
-                    <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">(AC sub-filter)</span>
+                    {draft.productFamily && (
+                      <span className="ml-1.5 text-[10px] font-normal text-primary/70">({draft.productFamily})</span>
+                    )}
                   </label>
                   <div className="relative">
                     <select
@@ -818,7 +835,7 @@ export default function HelpInstallationPage() {
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors appearance-none pr-7"
                     >
                       <option value="">All Details</option>
-                      {AC_PRODUCT_DETAILS.map((d) => <option key={d} value={d}>{d}</option>)}
+                      {availableDetails.map((d) => <option key={d} value={d}>{d}</option>)}
                     </select>
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   </div>
