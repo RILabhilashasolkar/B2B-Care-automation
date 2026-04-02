@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { mockCustomerTickets, mockCustomers } from "../lib/mockData";
+import { mockCustomerTickets, mockCustomers, mockOrders, type ServiceOrder } from "../lib/mockData";
 import {
   Plus, Search, ChevronRight, Phone, Hash, Wrench,
-  X, ShoppingBag, AlertOctagon, MessageSquareWarning,
+  X, ShoppingBag, AlertOctagon, MessageSquareWarning, ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -39,23 +39,54 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
 ];
 
 export default function CustomerDashboardPage() {
-  const [search, setSearch]             = useState("");
-  const [searchType, setSearchType]     = useState<"mobile" | "serial" | "ticket">("mobile");
-  const [searchResult, setSearchResult] = useState<typeof mockCustomers[0] | null>(null);
-  const [searched, setSearched]         = useState(false);
-  const [activeTab, setActiveTab]       = useState<TabKey>("all");
+  const [search, setSearch]               = useState("");
+  const [searchType, setSearchType]       = useState<"mobile" | "serial" | "ticket" | "serviceorder">("mobile");
+  const [searchResult, setSearchResult]   = useState<typeof mockCustomers[0] | null>(null);
+  const [soResult, setSoResult]           = useState<ServiceOrder | null>(null);
+  const [searched, setSearched]           = useState(false);
+  const [activeTab, setActiveTab]         = useState<TabKey>("all");
   const navigate = useNavigate();
+
+  const resetSearch = () => {
+    setSearch(""); setSearched(false); setSearchResult(null); setSoResult(null);
+  };
 
   const handleSearch = () => {
     setSearched(true);
+    setSoResult(null);
+
     if (searchType === "mobile") {
       setSearchResult(mockCustomers.find((c) => c.mobile.includes(search)) || null);
+
     } else if (searchType === "serial") {
       setSearchResult(
         mockCustomers.find((c) =>
           c.purchases.some((p) => p.serialNumber.toLowerCase().includes(search.toLowerCase()))
         ) || null
       );
+
+    } else if (searchType === "serviceorder") {
+      // Find the service order across all order items
+      let matchedSO: ServiceOrder | null = null;
+      let matchedCustomer: typeof mockCustomers[0] | null = null;
+      outer: for (const order of mockOrders) {
+        for (const shipment of order.shipments) {
+          for (const item of shipment.items) {
+            if (
+              item.serviceOrder &&
+              item.serviceOrder.id.toLowerCase().includes(search.toLowerCase())
+            ) {
+              matchedSO = item.serviceOrder;
+              matchedCustomer =
+                mockCustomers.find((c) => c.mobile === item.serviceOrder!.customerMobile) || null;
+              break outer;
+            }
+          }
+        }
+      }
+      setSoResult(matchedSO);
+      setSearchResult(matchedCustomer);
+
     } else {
       setSearchResult(null);
     }
@@ -107,13 +138,14 @@ export default function CustomerDashboardPage() {
         {/* Search type chips */}
         <div className="flex gap-1.5 mb-3 overflow-x-auto phone-scroll pb-0.5">
           {([
-            { key: "mobile", label: "Mobile Number", icon: Phone },
-            { key: "serial", label: "Serial Number", icon: Hash },
-            { key: "ticket", label: "Ticket #",      icon: Hash },
+            { key: "mobile",       label: "Mobile Number",   icon: Phone },
+            { key: "serial",       label: "Serial Number",   icon: Hash },
+            { key: "ticket",       label: "Ticket #",        icon: Hash },
+            { key: "serviceorder", label: "Service Order #", icon: ClipboardList },
           ] as const).map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => { setSearchType(key); setSearch(""); setSearched(false); }}
+              onClick={() => { setSearchType(key); resetSearch(); }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${
                 searchType === key
                   ? "bg-primary text-primary-foreground"
@@ -132,8 +164,9 @@ export default function CustomerDashboardPage() {
             <input
               type="text"
               placeholder={
-                searchType === "mobile" ? "Enter 10-digit mobile number..." :
-                searchType === "serial" ? "Enter product serial number..." :
+                searchType === "mobile"       ? "Enter 10-digit mobile number..." :
+                searchType === "serial"       ? "Enter product serial number..." :
+                searchType === "serviceorder" ? "Enter service order number (e.g. SO-2024-0001)..." :
                 "Enter ticket number..."
               }
               value={search}
@@ -142,10 +175,7 @@ export default function CustomerDashboardPage() {
               className="w-full pl-10 pr-8 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
             />
             {search && (
-              <button
-                onClick={() => { setSearch(""); setSearched(false); setSearchResult(null); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-              >
+              <button onClick={resetSearch} className="absolute right-3 top-1/2 -translate-y-1/2">
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             )}
@@ -158,8 +188,64 @@ export default function CustomerDashboardPage() {
           </button>
         </div>
 
+        {/* Search Result — service order */}
+        {searched && searchType === "serviceorder" && soResult && searchResult && (
+          <div className="mt-3 rounded-xl border border-teal-200 overflow-hidden">
+            {/* SO details strip */}
+            <div className="bg-teal-50 px-3.5 py-2.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-3.5 h-3.5 text-teal-700 flex-shrink-0" />
+                <div>
+                  <p className="text-[10px] font-bold text-teal-900">
+                    Service Order: <span className="font-mono">{soResult.id}</span>
+                  </p>
+                  <p className="text-[10px] text-teal-700 mt-0.5">
+                    {soResult.status}
+                  </p>
+                </div>
+              </div>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                soResult.status === "Closed"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : soResult.status === "Engineer Visit Pending"
+                  ? "bg-amber-100 text-amber-700"
+                  : soResult.status === "Engineer On the Way"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-muted text-muted-foreground"
+              }`}>
+                {soResult.status}
+              </span>
+            </div>
+            {/* Customer row */}
+            <Link
+              to={`/service/customer/${searchResult.id}`}
+              className="flex items-center justify-between px-3.5 py-3 bg-card hover:bg-accent/50 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-primary">{searchResult.name.charAt(0)}</span>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">{searchResult.name}</p>
+                  <p className="text-[10px] text-muted-foreground">+91 {searchResult.mobile} · {searchResult.city}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-muted-foreground">{searchResult.purchases.length} product(s)</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {searched && searchType === "serviceorder" && !soResult && (
+          <div className="mt-3 bg-muted/50 rounded-xl p-3.5 text-center">
+            <p className="text-xs text-muted-foreground">No service order found with that ID.</p>
+          </div>
+        )}
+
         {/* Search Result — customer */}
-        {searched && searchType !== "ticket" && searchResult && (
+        {searched && searchType !== "ticket" && searchType !== "serviceorder" && searchResult && (
           <Link
             to={`/service/customer/${searchResult.id}`}
             className="mt-3 block bg-accent/50 rounded-xl p-3.5 hover:bg-accent transition-colors group"
@@ -182,7 +268,7 @@ export default function CustomerDashboardPage() {
           </Link>
         )}
 
-        {searched && searchType !== "ticket" && !searchResult && (
+        {searched && searchType !== "ticket" && searchType !== "serviceorder" && !searchResult && (
           <div className="mt-3 bg-muted/50 rounded-xl p-3.5 text-center">
             <p className="text-xs text-muted-foreground">No customer found. Create a ticket from Create Complaint.</p>
             <button
