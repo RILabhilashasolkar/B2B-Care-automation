@@ -14,7 +14,7 @@ const CALL_CENTRE = "tel:18001234567";
 
 // ── Quick Actions ─────────────────────────────────────────────────────────────
 const QUICK_ACTIONS: Array<{ label: string; desc: string; icon: typeof Phone; path?: string; tel?: string; mailto?: string; bg: string; color: string }> = [
-  { label: "Self Help",     desc: "My purchase issues",          icon: Headphones,    path: "/service/self",                       bg: "bg-blue-50",    color: "text-blue-600" },
+  { label: "My Tickets",    desc: "My purchase issues",          icon: Headphones,    path: "/service/self",                       bg: "bg-blue-50",    color: "text-blue-600" },
   { label: "My Customers",  desc: "Customer service hub",        icon: Users,         path: "/service/customer",                   bg: "bg-violet-50",  color: "text-violet-600" },
   { label: "Knowledge Base",desc: "Browse articles",             icon: HelpCircle,    path: "/faq",                                bg: "bg-amber-50",   color: "text-amber-600" },
   { label: "Chat",          desc: "Chat with JMD support",       icon: MessageCircle, path: "/chat",                               bg: "bg-green-50",   color: "text-green-600" },
