@@ -20,6 +20,7 @@ import HelpInstallationPage from "./pages/HelpInstallationPage";
 import FaqPage from "./pages/FaqPage";
 import LiveChatPage from "./pages/LiveChatPage";
 import MyBusinessPage from "./pages/MyBusinessPage";
+import CustomerInstallBookingPage from "./pages/CustomerInstallBookingPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/ticket/create" element={<SmartCreateTicketPage />} />
             <Route path="/ticket/:ticketId" element={<TicketDetailPage />} />
             <Route path="/service/lookup" element={<CustomerDashboardPage />} />
+            <Route path="/install/book" element={<CustomerInstallBookingPage />} />
             <Route path="*" element={<HomePage />} />
           </Routes>
         </AppLayout>

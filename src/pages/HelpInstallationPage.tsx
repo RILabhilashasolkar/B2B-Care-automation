@@ -232,23 +232,59 @@ function CreateInstallationModal({
 }
 
 // ── Service Link Modal ────────────────────────────────────────────────────────
+// ── Booking URL builder ───────────────────────────────────────────────────
+const RETAILER_NAME = "Kumar Electronics & Appliances";
+const APP_BASE      = "https://rilabhilashasolkar.github.io/B2B-Care-automation/#/install/book";
+
+function buildBookingUrl(item: OrderItem, mobile: string): string {
+  const p = new URLSearchParams({
+    product:  item.name,
+    sn:       item.serialNumber,
+    retailer: RETAILER_NAME,
+    mobile,
+  });
+  return `${APP_BASE}?${p.toString()}`;
+}
+
+function buildWaMessage(item: OrderItem, bookingUrl: string): string {
+  return (
+    `Hi! 🎉\n\n` +
+    `Thank you for shopping at *${RETAILER_NAME}* 🏪\n\n` +
+    `Your product is ready for *FREE Installation*:\n\n` +
+    `📦 *${item.name}*\n` +
+    `🔢 Serial No: ${item.serialNumber}\n\n` +
+    `Book your installation in just *2 minutes* 👇\n\n` +
+    `${bookingUrl}\n\n` +
+    `_Powered by JioMart Digital_ 💙`
+  );
+}
+
+function buildSmsMessage(item: OrderItem, bookingUrl: string): string {
+  return (
+    `Hi! Your ${item.name} (SN: ${item.serialNumber}) from ${RETAILER_NAME} is ready for FREE installation. ` +
+    `Book here: ${bookingUrl} — JioMart Digital`
+  );
+}
+
 function ServiceLinkModal({
   item,
   mobile,
   mobileError,
   onMobileChange,
   onClose,
-  onSubmit,
+  onWhatsApp,
+  onSms,
 }: {
   item: OrderItem;
   mobile: string;
   mobileError: string;
   onMobileChange: (v: string) => void;
   onClose: () => void;
-  onSubmit: () => void;
+  onWhatsApp: () => void;
+  onSms: () => void;
 }) {
   const inputCls =
-    "w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/40";
+    "w-full px-3 py-2 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40";
 
   return (
     <div
@@ -256,9 +292,10 @@ function ServiceLinkModal({
       onClick={onClose}
     >
       <div
-        className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm"
+        className="bg-card rounded-2xl border border-border p-5 w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-foreground">Send Service Link</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-accent transition-colors">
@@ -266,21 +303,24 @@ function ServiceLinkModal({
           </button>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 mb-4">
-          <p className="text-xs font-semibold text-green-900 truncate">{item.name}</p>
+        {/* Product chip */}
+        <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 mb-4">
+          <p className="text-xs font-bold text-green-900">{item.name}</p>
           <p className="text-[10px] font-mono text-green-700 mt-0.5">SN: {item.serialNumber}</p>
         </div>
 
-        <p className="text-xs text-muted-foreground mb-3">
-          Send a WhatsApp/SMS link so the customer can register their product and book installation.
+        {/* Description */}
+        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+          Send a personalised WhatsApp/SMS message with a booking link so your customer can schedule their FREE installation in minutes.
         </p>
 
+        {/* Mobile input */}
         <div className="mb-4">
-          <label className="block text-xs font-semibold text-muted-foreground mb-1">
-            Customer Mobile *
+          <label className="block text-xs font-semibold text-foreground mb-1.5">
+            Customer Mobile <span className="text-red-500">*</span>
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium flex-shrink-0">+91</span>
+            <span className="text-xs text-muted-foreground font-semibold flex-shrink-0 bg-muted px-2.5 py-2 rounded-xl">+91</span>
             <input
               value={mobile}
               onChange={(e) => onMobileChange(e.target.value.replace(/\D/g, "").slice(0, 10))}
@@ -289,27 +329,34 @@ function ServiceLinkModal({
               className={inputCls}
             />
           </div>
-          {mobileError && (
-            <p className="text-[10px] text-red-600 mt-1">{mobileError}</p>
-          )}
+          {mobileError && <p className="text-[10px] text-red-600 mt-1">{mobileError}</p>}
         </div>
 
+        {/* What they'll receive preview */}
+        {mobile.length === 10 && (
+          <div className="bg-muted/40 rounded-xl px-3 py-2.5 mb-4 border border-border">
+            <p className="text-[10px] font-semibold text-muted-foreground mb-1">Preview message</p>
+            <p className="text-[10px] text-foreground leading-relaxed">
+              Hi! 🎉 Thank you for shopping at <span className="font-bold">Kumar Electronics</span>. Book your FREE installation for <span className="font-bold">{item.name}</span> »
+            </p>
+          </div>
+        )}
+
+        {/* Send buttons */}
         <div className="flex gap-2">
           <button
-            onClick={onSubmit}
+            onClick={onWhatsApp}
             disabled={!mobile}
-            className="flex-1 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-80 transition-opacity"
           >
-            <MessageCircle className="w-3.5 h-3.5" />
-            WhatsApp
+            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
           </button>
           <button
-            onClick={onSubmit}
+            onClick={onSms}
             disabled={!mobile}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-80 transition-opacity"
           >
-            <Phone className="w-3.5 h-3.5" />
-            SMS
+            <Phone className="w-3.5 h-3.5" /> SMS
           </button>
         </div>
       </div>
@@ -446,14 +493,33 @@ export default function HelpInstallationPage() {
     closeModal();
   };
 
-  const handleLinkSubmit = () => {
-    if (!modalItemId) return;
+  const validateLinkMobile = (): boolean => {
     if (!/^[6-9]\d{9}$/.test(modalMobile)) {
       setModalMobileError("Enter a valid 10-digit Indian mobile number");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleWhatsApp = () => {
+    if (!modalItemId || !validateLinkMobile()) return;
+    const poolItem = productPool.find((p) => p.item.id === modalItemId);
+    if (!poolItem) return;
+    const url = buildBookingUrl(poolItem.item, modalMobile);
+    const msg = buildWaMessage(poolItem.item, url);
+    window.open(`https://wa.me/91${modalMobile}?text=${encodeURIComponent(msg)}`, "_blank");
     setServiceLinksSent((prev) => ({ ...prev, [modalItemId]: modalMobile }));
-    alert(`✅ Service link sent to +91 ${modalMobile}`);
+    closeModal();
+  };
+
+  const handleSms = () => {
+    if (!modalItemId || !validateLinkMobile()) return;
+    const poolItem = productPool.find((p) => p.item.id === modalItemId);
+    if (!poolItem) return;
+    const url = buildBookingUrl(poolItem.item, modalMobile);
+    const msg = buildSmsMessage(poolItem.item, url);
+    window.open(`sms:+91${modalMobile}?body=${encodeURIComponent(msg)}`, "_blank");
+    setServiceLinksSent((prev) => ({ ...prev, [modalItemId]: modalMobile }));
     closeModal();
   };
 
@@ -888,7 +954,8 @@ export default function HelpInstallationPage() {
           mobileError={modalMobileError}
           onMobileChange={(v) => { setModalMobile(v); setModalMobileError(""); }}
           onClose={closeModal}
-          onSubmit={handleLinkSubmit}
+          onWhatsApp={handleWhatsApp}
+          onSms={handleSms}
         />
       )}
 
