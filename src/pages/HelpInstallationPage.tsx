@@ -238,10 +238,10 @@ const APP_BASE      = "https://rilabhilashasolkar.github.io/B2B-Care-automation/
 
 function buildBookingUrl(item: OrderItem, mobile: string): string {
   const p = new URLSearchParams({
-    product:  item.name,
-    sn:       item.serialNumber,
-    retailer: RETAILER_NAME,
-    mobile,
+    p: item.name,
+    s: item.serialNumber,
+    r: RETAILER_NAME,
+    m: mobile,
   });
   return `${APP_BASE}?${p.toString()}`;
 }

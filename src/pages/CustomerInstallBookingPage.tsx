@@ -23,10 +23,10 @@ type BookingForm = {
 export default function CustomerInstallBookingPage() {
   const [params] = useSearchParams();
 
-  const productName  = params.get("product")  || "Your Product";
-  const serialNumber = params.get("sn")        || "";
-  const retailer     = params.get("retailer")  || "Your JioMart Retailer";
-  const preMobile    = params.get("mobile")    || "";
+  const productName  = params.get("p")  || "Your Product";
+  const serialNumber = params.get("s")  || "";
+  const retailer     = params.get("r")  || "Your JioMart Retailer";
+  const preMobile    = params.get("m")  || "";
 
   const [form, setForm] = useState<BookingForm>({
     name: "", mobile: preMobile, address: "", city: "", pincode: "", preferredDate: "",
