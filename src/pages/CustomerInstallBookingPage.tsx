@@ -47,8 +47,7 @@ export default function CustomerInstallBookingPage() {
       })()
     : null;
 
-  const [duplicate, setDuplicate] = useState<BookingRecord | null>(existingRecord);
-  const [overrideConfirmed, setOverrideConfirmed] = useState(false);
+  const [duplicate] = useState<BookingRecord | null>(existingRecord);
 
   const [form, setForm] = useState<BookingForm>({
     name: "", mobile: preMobile, address: "", city: "", pincode: "", preferredDate: "",
@@ -87,7 +86,7 @@ export default function CustomerInstallBookingPage() {
   };
 
   // ── Duplicate screen ────────────────────────────────────────────────────
-  if (duplicate && !overrideConfirmed) {
+  if (duplicate) {
     const submittedOn = new Date(duplicate.submittedAt).toLocaleDateString("en-IN", {
       day: "numeric", month: "long", year: "numeric",
     });
@@ -146,21 +145,12 @@ export default function CustomerInstallBookingPage() {
         </div>
 
         <p className="text-xs text-gray-400 mb-5 leading-relaxed max-w-xs">
-          Our team will contact you shortly. If you need to update your details, you can submit a new request.
+          Our team will contact you shortly to confirm the installation date.
         </p>
 
-        {/* Actions */}
-        <div className="flex flex-col gap-3 w-full max-w-sm">
-          <div className="flex items-center justify-center gap-1.5">
-            <span className="text-[11px] text-gray-400">Sold by</span>
-            <span className="text-[11px] font-semibold text-gray-600">{retailer}</span>
-          </div>
-          <button
-            onClick={() => { setDuplicate(null); setOverrideConfirmed(true); }}
-            className="w-full py-3.5 border-2 border-[#3B4FE8] text-[#3B4FE8] rounded-2xl text-sm font-bold active:bg-[#3B4FE8]/5 transition-all"
-          >
-            Submit New Request Anyway
-          </button>
+        <div className="flex items-center justify-center gap-1.5">
+          <span className="text-[11px] text-gray-400">Sold by</span>
+          <span className="text-[11px] font-semibold text-gray-600">{retailer}</span>
         </div>
 
         <p className="text-[11px] text-gray-300 mt-4">Powered by JioMart Digital</p>
