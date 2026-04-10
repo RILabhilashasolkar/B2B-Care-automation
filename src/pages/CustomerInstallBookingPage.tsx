@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Package, MapPin, Calendar, CheckCircle,
-  Smartphone, User, ChevronRight,
+  Smartphone, User, ChevronRight, AlertTriangle,
 } from "lucide-react";
 
 // ── Input helper ──────────────────────────────────────────────────────────
@@ -20,6 +20,15 @@ type BookingForm = {
   preferredDate: string;
 };
 
+type BookingRecord = BookingForm & {
+  ref: string;
+  submittedAt: string;
+  productName: string;
+  serialNumber: string;
+};
+
+const storageKey = (sn: string) => `jmd_install_${sn}`;
+
 export default function CustomerInstallBookingPage() {
   const [params] = useSearchParams();
 
@@ -27,6 +36,19 @@ export default function CustomerInstallBookingPage() {
   const serialNumber = params.get("s")  || "";
   const retailer     = "Kumar Electronics & Appliances";
   const preMobile    = params.get("m")  || "";
+
+  // ── Idempotency: check if this serial was already booked ─────────────────
+  const existingRecord: BookingRecord | null = serialNumber
+    ? (() => {
+        try {
+          const raw = localStorage.getItem(storageKey(serialNumber));
+          return raw ? (JSON.parse(raw) as BookingRecord) : null;
+        } catch { return null; }
+      })()
+    : null;
+
+  const [duplicate, setDuplicate] = useState<BookingRecord | null>(existingRecord);
+  const [overrideConfirmed, setOverrideConfirmed] = useState(false);
 
   const [form, setForm] = useState<BookingForm>({
     name: "", mobile: preMobile, address: "", city: "", pincode: "", preferredDate: "",
@@ -48,8 +70,103 @@ export default function CustomerInstallBookingPage() {
     if (!form.city.trim())                         errs.city    = "Please enter your city";
     if (!/^\d{6}$/.test(form.pincode))            errs.pincode = "Enter valid 6-digit pincode";
     if (Object.keys(errs).length) { setErrors(errs); return; }
+
+    // Persist booking record to localStorage for idempotency
+    if (serialNumber) {
+      const record: BookingRecord = {
+        ...form,
+        ref: bookingRef,
+        submittedAt: new Date().toISOString(),
+        productName,
+        serialNumber,
+      };
+      try { localStorage.setItem(storageKey(serialNumber), JSON.stringify(record)); } catch { /* ignore */ }
+    }
+
     setSubmitted(true);
   };
+
+  // ── Duplicate screen ────────────────────────────────────────────────────
+  if (duplicate && !overrideConfirmed) {
+    const submittedOn = new Date(duplicate.submittedAt).toLocaleDateString("en-IN", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+    const submittedTime = new Date(duplicate.submittedAt).toLocaleTimeString("en-IN", {
+      hour: "2-digit", minute: "2-digit",
+    });
+    return (
+      <div className="min-h-screen bg-[#FFFBF0] flex flex-col items-center justify-center px-6 py-10 text-center">
+        {/* Icon */}
+        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mb-5 shadow-md shadow-amber-100">
+          <AlertTriangle className="w-10 h-10 text-amber-500" />
+        </div>
+
+        <h1 className="text-xl font-black text-gray-900 mb-1">Already Requested!</h1>
+        <p className="text-sm text-gray-500 mb-6 leading-relaxed max-w-xs">
+          You've already submitted an installation request for this product.
+        </p>
+
+        {/* Existing booking card */}
+        <div className="bg-white rounded-3xl shadow-md px-5 py-5 w-full max-w-sm text-left mb-5 border border-amber-100">
+          <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <CheckCircle className="w-3 h-3" /> Existing Booking
+          </p>
+          <div className="space-y-2.5 text-sm text-gray-700">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-xs">Ref #</span>
+              <span className="font-bold font-mono text-[#3B4FE8] text-xs">{duplicate.ref}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-xs">Product</span>
+              <span className="font-semibold text-xs text-right max-w-[180px]">{duplicate.productName}</span>
+            </div>
+            {duplicate.serialNumber && (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-xs">Serial No.</span>
+                <span className="font-mono text-xs">{duplicate.serialNumber}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-xs">Name</span>
+              <span className="font-semibold text-xs">{duplicate.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-xs">Mobile</span>
+              <span className="text-xs">+91 {duplicate.mobile}</span>
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-gray-400 text-xs flex-shrink-0">Address</span>
+              <span className="text-right text-xs">{duplicate.address}, {duplicate.city} — {duplicate.pincode}</span>
+            </div>
+            <div className="border-t border-gray-100 pt-2 flex items-center justify-between">
+              <span className="text-gray-400 text-xs">Submitted</span>
+              <span className="text-xs text-gray-600">{submittedOn} · {submittedTime}</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 mb-5 leading-relaxed max-w-xs">
+          Our team will contact you shortly. If you need to update your details, you can submit a new request.
+        </p>
+
+        {/* Actions */}
+        <div className="flex flex-col gap-3 w-full max-w-sm">
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="text-[11px] text-gray-400">Sold by</span>
+            <span className="text-[11px] font-semibold text-gray-600">{retailer}</span>
+          </div>
+          <button
+            onClick={() => { setDuplicate(null); setOverrideConfirmed(true); }}
+            className="w-full py-3.5 border-2 border-[#3B4FE8] text-[#3B4FE8] rounded-2xl text-sm font-bold active:bg-[#3B4FE8]/5 transition-all"
+          >
+            Submit New Request Anyway
+          </button>
+        </div>
+
+        <p className="text-[11px] text-gray-300 mt-4">Powered by JioMart Digital</p>
+      </div>
+    );
+  }
 
   // ── Success screen ──────────────────────────────────────────────────────
   if (submitted) {
