@@ -273,6 +273,7 @@ function ServiceLinkModal({
   onClose,
   onWhatsApp,
   onSms,
+  alreadySent,
 }: {
   item: OrderItem;
   mobile: string;
@@ -281,9 +282,19 @@ function ServiceLinkModal({
   onClose: () => void;
   onWhatsApp: () => void;
   onSms: () => void;
+  alreadySent?: { mobile: string; sentAt: string; channel: "whatsapp" | "sms" };
 }) {
+  const [confirmed, setConfirmed] = useState(false);
   const inputCls =
     "w-full px-3 py-2 bg-background border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40";
+
+  const isDuplicate = !!alreadySent && !confirmed;
+
+  const sentTime = alreadySent
+    ? new Date(alreadySent.sentAt).toLocaleString("en-IN", {
+        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+      })
+    : "";
 
   return (
     <div
@@ -296,7 +307,7 @@ function ServiceLinkModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-foreground">Send Service Link</h3>
+          <h3 className="text-sm font-bold text-foreground">Send Installation Link</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-accent transition-colors">
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -308,56 +319,103 @@ function ServiceLinkModal({
           <p className="text-[10px] font-mono text-green-700 mt-0.5">SN: {item.serialNumber}</p>
         </div>
 
-        {/* Description */}
-        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-          Send a personalised WhatsApp/SMS message with a booking link so your customer can schedule their FREE installation in minutes.
-        </p>
-
-        {/* Mobile input */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-foreground mb-1.5">
-            Customer Mobile <span className="text-red-500">*</span>
-          </label>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-semibold flex-shrink-0 bg-muted px-2.5 py-2 rounded-xl">+91</span>
-            <input
-              value={mobile}
-              onChange={(e) => onMobileChange(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              placeholder="10-digit mobile"
-              maxLength={10}
-              className={inputCls}
-            />
-          </div>
-          {mobileError && <p className="text-[10px] text-red-600 mt-1">{mobileError}</p>}
-        </div>
-
-        {/* What they'll receive preview */}
-        {mobile.length === 10 && (
-          <div className="bg-muted/40 rounded-xl px-3 py-2.5 mb-4 border border-border">
-            <p className="text-[10px] font-semibold text-muted-foreground mb-1">Preview message</p>
-            <p className="text-[10px] text-foreground leading-relaxed">
-              Hi! 🎉 Thank you for shopping at <span className="font-bold">Kumar Electronics</span>. Book your FREE installation for <span className="font-bold">{item.name}</span> »
-            </p>
+        {/* ── Duplicate / idempotency warning ── */}
+        {isDuplicate && (
+          <div className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3 mb-4">
+            <div className="flex items-start gap-2">
+              <span className="text-amber-500 text-base leading-none flex-shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-amber-800">Link already sent</p>
+                <p className="text-[10px] text-amber-700 mt-0.5 leading-relaxed">
+                  A booking link was sent via{" "}
+                  <span className="font-semibold capitalize">{alreadySent.channel}</span> to{" "}
+                  <span className="font-semibold font-mono">+91 {alreadySent.mobile}</span> on{" "}
+                  <span className="font-semibold">{sentTime}</span>.
+                </p>
+                <p className="text-[10px] text-amber-700 mt-1">
+                  Sending again may confuse the customer. Are you sure?
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-800 bg-white active:bg-amber-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setConfirmed(true)}
+                className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold active:opacity-80 transition-opacity"
+              >
+                Send Again
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Send buttons */}
-        <div className="flex gap-2">
-          <button
-            onClick={onWhatsApp}
-            disabled={!mobile}
-            className="flex-1 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-80 transition-opacity"
-          >
-            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-          </button>
-          <button
-            onClick={onSms}
-            disabled={!mobile}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-80 transition-opacity"
-          >
-            <Phone className="w-3.5 h-3.5" /> SMS
-          </button>
-        </div>
+        {/* Normal send UI — shown when no duplicate or user confirmed */}
+        {!isDuplicate && (
+          <>
+            {confirmed && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-4">
+                <p className="text-[10px] text-blue-800 font-semibold">
+                  ✓ Duplicate confirmed — sending a fresh link
+                </p>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+              Send a personalised WhatsApp/SMS message with a booking link so your customer can schedule their FREE installation in minutes.
+            </p>
+
+            {/* Mobile input */}
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Customer Mobile <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-semibold flex-shrink-0 bg-muted px-2.5 py-2 rounded-xl">+91</span>
+                <input
+                  value={mobile}
+                  onChange={(e) => onMobileChange(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  placeholder="10-digit mobile"
+                  maxLength={10}
+                  className={inputCls}
+                />
+              </div>
+              {mobileError && <p className="text-[10px] text-red-600 mt-1">{mobileError}</p>}
+            </div>
+
+            {/* Preview */}
+            {mobile.length === 10 && (
+              <div className="bg-muted/40 rounded-xl px-3 py-2.5 mb-4 border border-border">
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1">Preview message</p>
+                <p className="text-[10px] text-foreground leading-relaxed">
+                  Hi! 🎉 Thank you for shopping at <span className="font-bold">Kumar Electronics</span>. Book your FREE installation for <span className="font-bold">{item.name}</span> »
+                </p>
+              </div>
+            )}
+
+            {/* Send buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={onWhatsApp}
+                disabled={!mobile}
+                className="flex-1 py-2.5 bg-[hsl(var(--success))] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-80 transition-opacity"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+              </button>
+              <button
+                onClick={onSms}
+                disabled={!mobile}
+                className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-80 transition-opacity"
+              >
+                <Phone className="w-3.5 h-3.5" /> SMS
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -381,7 +439,9 @@ export default function HelpInstallationPage() {
   const [installRequests, setInstallRequests] = useState<
     Record<string, { customerName: string; mobile: string }>
   >({});
-  const [serviceLinksSent, setServiceLinksSent] = useState<Record<string, string>>({});
+  const [serviceLinksSent, setServiceLinksSent] = useState<
+    Record<string, { mobile: string; sentAt: string; channel: "whatsapp" | "sms" }>
+  >({});
 
   // ── Product pool: delivered + eligible + installation NOT yet raised ────────
   // Items with installationRequested or installationNotByUs are tracked under
@@ -507,7 +567,10 @@ export default function HelpInstallationPage() {
     const url = buildBookingUrl(poolItem.item, modalMobile);
     const msg = buildWaMessage(poolItem.item, url);
     window.open(`https://wa.me/91${modalMobile}?text=${encodeURIComponent(msg)}`, "_blank");
-    setServiceLinksSent((prev) => ({ ...prev, [modalItemId]: modalMobile }));
+    setServiceLinksSent((prev) => ({
+      ...prev,
+      [modalItemId]: { mobile: modalMobile, sentAt: new Date().toISOString(), channel: "whatsapp" },
+    }));
     closeModal();
   };
 
@@ -518,7 +581,10 @@ export default function HelpInstallationPage() {
     const url = buildBookingUrl(poolItem.item, modalMobile);
     const msg = buildSmsMessage(poolItem.item, url);
     window.open(`sms:+91${modalMobile}?body=${encodeURIComponent(msg)}`, "_blank");
-    setServiceLinksSent((prev) => ({ ...prev, [modalItemId]: modalMobile }));
+    setServiceLinksSent((prev) => ({
+      ...prev,
+      [modalItemId]: { mobile: modalMobile, sentAt: new Date().toISOString(), channel: "sms" },
+    }));
     closeModal();
   };
 
@@ -671,9 +737,9 @@ export default function HelpInstallationPage() {
           {filtered.map(({ order, shipment, item }) => {
             const isRequested = item.installationRequested || !!installRequests[item.id];
             const isNotByUs   = item.installationNotByUs;
-            const linkSent    = serviceLinksSent[item.id];
+            const linkSent    = serviceLinksSent[item.id] ?? null;
             const showInstallBtn = item.installationEligible && !isRequested && !isNotByUs;
-            const showLinkBtn    = !item.customerMobile && !linkSent && !isRequested;
+            const showLinkBtn    = !item.customerMobile && !isRequested;
 
             return (
               <div key={item.id} className="bg-card border border-border rounded-xl overflow-hidden">
@@ -746,7 +812,12 @@ export default function HelpInstallationPage() {
                         <div className="mt-2 flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5">
                           <Phone className="w-3 h-3 text-green-600" />
                           <p className="text-[10px] text-green-800">
-                            Link sent to +91 {linkSent}
+                            Link sent via{" "}
+                            <span className="font-semibold capitalize">{linkSent.channel}</span> to{" "}
+                            +91 {linkSent.mobile} ·{" "}
+                            {new Date(linkSent.sentAt).toLocaleTimeString("en-IN", {
+                              hour: "2-digit", minute: "2-digit",
+                            })}
                           </p>
                         </div>
                       )}
@@ -955,6 +1026,7 @@ export default function HelpInstallationPage() {
           onClose={closeModal}
           onWhatsApp={handleWhatsApp}
           onSms={handleSms}
+          alreadySent={serviceLinksSent[modalPoolItem.item.id]}
         />
       )}
 
