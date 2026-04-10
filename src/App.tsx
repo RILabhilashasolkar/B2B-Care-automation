@@ -21,6 +21,8 @@ import FaqPage from "./pages/FaqPage";
 import LiveChatPage from "./pages/LiveChatPage";
 import MyBusinessPage from "./pages/MyBusinessPage";
 import CustomerInstallBookingPage from "./pages/CustomerInstallBookingPage";
+import WaRedirectPage  from "./pages/WaRedirectPage";
+import SmsRedirectPage from "./pages/SmsRedirectPage";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/ticket/:ticketId" element={<TicketDetailPage />} />
             <Route path="/service/lookup" element={<CustomerDashboardPage />} />
             <Route path="/install/book" element={<CustomerInstallBookingPage />} />
+            <Route path="/wa"           element={<WaRedirectPage />} />
+            <Route path="/sms"          element={<SmsRedirectPage />} />
             <Route path="*" element={<HomePage />} />
           </Routes>
         </AppLayout>
