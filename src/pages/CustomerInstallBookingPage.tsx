@@ -25,7 +25,7 @@ export default function CustomerInstallBookingPage() {
 
   const productName  = params.get("p")  || "Your Product";
   const serialNumber = params.get("s")  || "";
-  const retailer     = params.get("r")  || "Your JioMart Retailer";
+  const retailer     = "Kumar Electronics & Appliances";
   const preMobile    = params.get("m")  || "";
 
   const [form, setForm] = useState<BookingForm>({

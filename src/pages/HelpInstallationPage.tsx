@@ -240,7 +240,6 @@ function buildBookingUrl(item: OrderItem, mobile: string): string {
   const p = new URLSearchParams({
     p: item.name,
     s: item.serialNumber,
-    r: RETAILER_NAME,
     m: mobile,
   });
   return `${APP_BASE}?${p.toString()}`;
