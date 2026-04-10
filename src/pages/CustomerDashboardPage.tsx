@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { mockCustomerTickets, mockCustomers, mockOrders, type ServiceOrder } from "../lib/mockData";
+import { getBookingByMobile, type CustomerBooking } from "../lib/bookingStorage";
 import {
   Plus, Search, ChevronRight, Phone, Hash, Wrench,
   X, ShoppingBag, AlertOctagon, MessageSquareWarning, ClipboardList,
+  Package, MapPin,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -43,12 +45,13 @@ export default function CustomerDashboardPage() {
   const [searchType, setSearchType]       = useState<"mobile" | "serial" | "ticket" | "serviceorder">("mobile");
   const [searchResult, setSearchResult]   = useState<typeof mockCustomers[0] | null>(null);
   const [soResult, setSoResult]           = useState<ServiceOrder | null>(null);
+  const [bookingResults, setBookingResults] = useState<CustomerBooking[]>([]);
   const [searched, setSearched]           = useState(false);
   const [activeTab, setActiveTab]         = useState<TabKey>("all");
   const navigate = useNavigate();
 
   const resetSearch = () => {
-    setSearch(""); setSearched(false); setSearchResult(null); setSoResult(null);
+    setSearch(""); setSearched(false); setSearchResult(null); setSoResult(null); setBookingResults([]);
   };
 
   const handleSearch = () => {
@@ -57,6 +60,7 @@ export default function CustomerDashboardPage() {
 
     if (searchType === "mobile") {
       setSearchResult(mockCustomers.find((c) => c.mobile.includes(search)) || null);
+      setBookingResults(getBookingByMobile(search));
 
     } else if (searchType === "serial") {
       setSearchResult(
@@ -268,7 +272,46 @@ export default function CustomerDashboardPage() {
           </Link>
         )}
 
-        {searched && searchType !== "ticket" && searchType !== "serviceorder" && !searchResult && (
+        {/* Booking results from WhatsApp/SMS installation link */}
+        {searched && searchType === "mobile" && bookingResults.length > 0 && (
+          <div className="mt-3 space-y-2">
+            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Package className="w-3 h-3" /> Installation Bookings
+            </p>
+            {bookingResults.map((b) => (
+              <Link
+                key={b.ref}
+                to="/help/installation"
+                className="block bg-emerald-50 border border-emerald-200 rounded-xl p-3 active:bg-emerald-100 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-foreground truncate">{b.productName}</p>
+                    <p className="text-[10px] font-mono text-muted-foreground">SN: {b.serialNumber}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {b.city} — {b.pincode}
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Ref: <span className="font-mono font-semibold text-primary">{b.ref}</span>
+                      {" · "}{new Date(b.submittedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    </p>
+                  </div>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    b.status === "Completed" ? "status-resolved" :
+                    b.status === "Confirmed" ? "status-open" : "status-in-progress"
+                  }`}>
+                    {b.status}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {searched && searchType !== "ticket" && searchType !== "serviceorder" && !searchResult && bookingResults.length === 0 && (
           <div className="mt-3 bg-muted/50 rounded-xl p-3.5 text-center">
             <p className="text-xs text-muted-foreground">No customer found. Create a ticket from Create Complaint.</p>
             <button

@@ -4,6 +4,7 @@ import {
   Package, MapPin, Calendar, CheckCircle,
   Smartphone, User, ChevronRight, AlertTriangle,
 } from "lucide-react";
+import { getBookingBySerial, saveBooking, type CustomerBooking } from "../lib/bookingStorage";
 
 // ── Input helper ──────────────────────────────────────────────────────────
 const fieldCls = (err?: boolean) =>
@@ -20,14 +21,7 @@ type BookingForm = {
   preferredDate: string;
 };
 
-type BookingRecord = BookingForm & {
-  ref: string;
-  submittedAt: string;
-  productName: string;
-  serialNumber: string;
-};
-
-const storageKey = (sn: string) => `jmd_install_${sn}`;
+// BookingRecord is now CustomerBooking from shared storage
 
 export default function CustomerInstallBookingPage() {
   const [params] = useSearchParams();
@@ -38,16 +32,9 @@ export default function CustomerInstallBookingPage() {
   const preMobile    = params.get("m")  || "";
 
   // ── Idempotency: check if this serial was already booked ─────────────────
-  const existingRecord: BookingRecord | null = serialNumber
-    ? (() => {
-        try {
-          const raw = localStorage.getItem(storageKey(serialNumber));
-          return raw ? (JSON.parse(raw) as BookingRecord) : null;
-        } catch { return null; }
-      })()
-    : null;
-
-  const [duplicate] = useState<BookingRecord | null>(existingRecord);
+  const [duplicate] = useState<CustomerBooking | null>(
+    serialNumber ? getBookingBySerial(serialNumber) : null
+  );
 
   const [form, setForm] = useState<BookingForm>({
     name: "", mobile: preMobile, address: "", city: "", pincode: "", preferredDate: "",
@@ -70,16 +57,21 @@ export default function CustomerInstallBookingPage() {
     if (!/^\d{6}$/.test(form.pincode))            errs.pincode = "Enter valid 6-digit pincode";
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    // Persist booking record to localStorage for idempotency
+    // Persist to shared storage — reflects in retailer's B2B app
     if (serialNumber) {
-      const record: BookingRecord = {
-        ...form,
+      saveBooking({
         ref: bookingRef,
-        submittedAt: new Date().toISOString(),
-        productName,
         serialNumber,
-      };
-      try { localStorage.setItem(storageKey(serialNumber), JSON.stringify(record)); } catch { /* ignore */ }
+        productName,
+        customerName: form.name,
+        customerMobile: form.mobile,
+        address: form.address,
+        city: form.city,
+        pincode: form.pincode,
+        preferredDate: form.preferredDate,
+        submittedAt: new Date().toISOString(),
+        status: "Pending",
+      });
     }
 
     setSubmitted(true);
@@ -127,11 +119,11 @@ export default function CustomerInstallBookingPage() {
             )}
             <div className="flex items-center justify-between">
               <span className="text-gray-400 text-xs">Name</span>
-              <span className="font-semibold text-xs">{duplicate.name}</span>
+              <span className="font-semibold text-xs">{duplicate.customerName}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-400 text-xs">Mobile</span>
-              <span className="text-xs">+91 {duplicate.mobile}</span>
+              <span className="text-xs">+91 {duplicate.customerMobile}</span>
             </div>
             <div className="flex items-start justify-between gap-2">
               <span className="text-gray-400 text-xs flex-shrink-0">Address</span>

@@ -9,6 +9,7 @@ import {
 import {
   mockOrders, mockSelfTickets, mockCustomerTickets
 } from "../lib/mockData";
+import { getBookings } from "../lib/bookingStorage";
 
 const CALL_CENTRE = "tel:18001234567";
 
@@ -268,6 +269,7 @@ function StatDetail({ statKey, onClose }: { statKey: StatKey; onClose: () => voi
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HelpCenterPage() {
   const [expandedStat, setExpandedStat] = useState<StatKey | null>(null);
+  const customerBookings = getBookings();
 
   return (
     <div className="animate-fade-in pb-4 -mx-4 -mt-4">
@@ -399,6 +401,33 @@ export default function HelpCenterPage() {
       <div className="px-4 pt-3 pb-1">
         <h2 className="text-sm font-bold text-foreground mb-2">Recent Activity</h2>
         <div className="bg-card rounded-xl border border-border divide-y divide-border">
+          {/* Customer installation booking rows */}
+          {customerBookings.map((b) => (
+            <Link
+              key={b.ref}
+              to="/help/installation"
+              className="flex items-center gap-3 px-3 py-3 active:bg-accent/10 transition-colors"
+            >
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                b.status === "Completed" ? "bg-success" :
+                b.status === "Confirmed" ? "bg-info" : "bg-warning"
+              }`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">
+                  📲 Installation Request — {b.productName}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {b.ref} · {b.customerName} · {new Date(b.submittedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                </p>
+              </div>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                b.status === "Completed" ? "status-resolved" :
+                b.status === "Confirmed" ? "status-open" : "status-in-progress"
+              }`}>
+                {b.status}
+              </span>
+            </Link>
+          ))}
           {activity.map((item) => (
             <Link
               key={item.id}

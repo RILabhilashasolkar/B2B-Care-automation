@@ -3,11 +3,15 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Search, X, SlidersHorizontal, Package,
   Wrench, Phone, CheckCircle, Calendar, MessageCircle, ChevronDown,
+  ClipboardCheck, MapPin, User,
 } from "lucide-react";
 import {
   mockOrders,
   type Order, type Shipment, type OrderItem,
 } from "../lib/mockData";
+import {
+  getBookings, updateBookingStatus, type CustomerBooking,
+} from "../lib/bookingStorage";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PoolItem {
@@ -423,6 +427,19 @@ function ServiceLinkModal({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HelpInstallationPage() {
+  // ── Customer bookings (submitted via WhatsApp/SMS link) ──────────────────
+  const [customerBookings, setCustomerBookings] = useState<CustomerBooking[]>(getBookings);
+
+  const confirmBooking = (ref: string) => {
+    updateBookingStatus(ref, "Confirmed");
+    setCustomerBookings(getBookings());
+  };
+
+  const completeBooking = (ref: string) => {
+    updateBookingStatus(ref, "Completed");
+    setCustomerBookings(getBookings());
+  };
+
   // ── Search & filter state ─────────────────────────────────────────────────
   const [search, setSearch] = useState<string>("");
   const [showFilterSheet, setShowFilterSheet] = useState<boolean>(false);
@@ -704,6 +721,98 @@ export default function HelpInstallationPage() {
           >
             Clear All
           </button>
+        </div>
+      )}
+
+      {/* ── Customer Booking Requests ──────────────────────────────────────── */}
+      {customerBookings.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+              Customer Booking Requests
+            </p>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+              {customerBookings.filter(b => b.status !== "Completed").length} active
+            </span>
+          </div>
+
+          {customerBookings.map((booking) => {
+            const submittedOn = new Date(booking.submittedAt).toLocaleDateString("en-IN", {
+              day: "numeric", month: "short", year: "2-digit",
+            });
+            const statusColor =
+              booking.status === "Completed"  ? "bg-gray-100 text-gray-500" :
+              booking.status === "Confirmed"  ? "bg-blue-100 text-blue-700" :
+                                                "bg-amber-100 text-amber-700";
+
+            return (
+              <div key={booking.ref} className="bg-card border border-emerald-200 rounded-xl overflow-hidden">
+                {/* Header row */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-emerald-50 border-b border-emerald-100">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-3.5 h-3.5 text-emerald-700" />
+                    <div>
+                      <p className="text-xs font-bold text-emerald-900 leading-tight">{booking.productName}</p>
+                      <p className="text-[10px] font-mono text-emerald-700">SN: {booking.serialNumber}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusColor}`}>
+                      {booking.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Customer details */}
+                <div className="px-4 py-3 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs font-semibold text-foreground">{booking.customerName}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">· +91 {booking.customerMobile}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <span className="text-[10px] text-muted-foreground leading-snug">
+                      {booking.address}, {booking.city} — {booking.pincode}
+                    </span>
+                  </div>
+                  {booking.preferredDate && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <span className="text-[10px] text-muted-foreground">
+                        Preferred: {new Date(booking.preferredDate).toLocaleDateString("en-IN", {
+                          day: "numeric", month: "short", year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      Ref: <span className="text-primary font-bold">{booking.ref}</span>
+                      {" · "}{submittedOn}
+                    </span>
+                    {booking.status === "Pending" && (
+                      <button
+                        onClick={() => confirmBooking(booking.ref)}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-primary text-white active:opacity-80 transition-opacity"
+                      >
+                        Confirm
+                      </button>
+                    )}
+                    {booking.status === "Confirmed" && (
+                      <button
+                        onClick={() => completeBooking(booking.ref)}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white active:opacity-80 transition-opacity"
+                      >
+                        Mark Done
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
