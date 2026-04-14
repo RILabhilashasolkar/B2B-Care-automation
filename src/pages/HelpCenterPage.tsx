@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Headphones, Users, HelpCircle, Phone, MessageCircle, Mail,
+  Headphones, Users, Phone, Mail,
   ChevronRight,
   Package, AlertTriangle, Wrench, X,
   Truck, CreditCard, RotateCcw,
@@ -15,20 +15,10 @@ const CALL_CENTRE = "tel:18001234567";
 
 // ── Quick Actions ─────────────────────────────────────────────────────────────
 const QUICK_ACTIONS: Array<{ label: string; desc: string; icon: typeof Phone; path?: string; tel?: string; mailto?: string; bg: string; color: string }> = [
-  { label: "My Tickets",    desc: "My purchase issues",          icon: Headphones,    path: "/service/self",                       bg: "bg-blue-50",    color: "text-blue-600" },
-  { label: "My Customers",  desc: "Customer service hub",        icon: Users,         path: "/service/customer",                   bg: "bg-violet-50",  color: "text-violet-600" },
-  { label: "Knowledge Base",desc: "Browse articles",             icon: HelpCircle,    path: "/faq",                                bg: "bg-amber-50",   color: "text-amber-600" },
-  { label: "Chat",          desc: "Chat with JMD support",       icon: MessageCircle, path: "/chat",                               bg: "bg-green-50",   color: "text-green-600" },
-  { label: "Call Us",       desc: "1800-XXX-XXXX",               icon: Phone,         tel: CALL_CENTRE,                            bg: "bg-pink-50",    color: "text-pink-600" },
-  { label: "Email Us",      desc: "jmdpartnercare@ril.com",      icon: Mail,          mailto: "mailto:jmdpartnercare@ril.com",     bg: "bg-cyan-50",    color: "text-cyan-600" },
-];
-
-const TOP_FAQ = [
-  { q: "How do I book a standard installation?",       tag: "Installation" },
-  { q: "Refund not received after return was approved?", tag: "Refund" },
-  { q: "How do I download my invoice / bill copy?",    tag: "Billing" },
-  { q: "My order is delayed beyond ETA — what to do?", tag: "Delivery" },
-  { q: "How to track a service order (SO) status?",    tag: "SO Lookup" },
+  { label: "My Tickets",   desc: "My purchase issues",     icon: Headphones, path: "/service/self",                   bg: "bg-blue-50",   color: "text-blue-600" },
+  { label: "My Customers", desc: "Customer service hub",   icon: Users,      path: "/service/customer",               bg: "bg-violet-50", color: "text-violet-600" },
+  { label: "Call Us",      desc: "1800-XXX-XXXX",          icon: Phone,      tel: CALL_CENTRE,                        bg: "bg-pink-50",   color: "text-pink-600" },
+  { label: "Email Us",     desc: "jmdpartnercare@ril.com", icon: Mail,       mailto: "mailto:jmdpartnercare@ril.com", bg: "bg-cyan-50",   color: "text-cyan-600" },
 ];
 
 // ── Help Desk data ────────────────────────────────────────────────────────────
@@ -346,9 +336,9 @@ export default function HelpCenterPage() {
         )}
       </div>
 
-      {/* Quick Actions — 6 items (3×2) */}
+      {/* Quick Actions — 4 items (2×2) */}
       <div className="px-4 pt-3 pb-2">
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5">
           {QUICK_ACTIONS.map((a) => {
             const cls = "bg-white rounded-xl p-3 flex flex-col items-center gap-2 shadow-sm border border-border active:scale-95 transition-transform";
             const inner = (
@@ -451,49 +441,6 @@ export default function HelpCenterPage() {
         </div>
       </div>
 
-      {/* Frequently Asked */}
-      <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-        <h2 className="text-sm font-bold text-foreground">Frequently Asked</h2>
-        <Link to="/faq" className="text-xs text-primary font-semibold">See All</Link>
-      </div>
-      <div className="mx-4 bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-        {TOP_FAQ.map((item, i) => (
-          <Link
-            key={i}
-            to="/faq"
-            className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0 active:bg-accent/30 transition-colors"
-          >
-            <div className="flex items-center gap-2.5 flex-1 min-w-0">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                item.tag === "Installation" ? "bg-blue-50 text-blue-600" :
-                item.tag === "Refund"       ? "bg-red-50 text-red-600" :
-                item.tag === "Billing"      ? "bg-amber-50 text-amber-600" :
-                item.tag === "Delivery"     ? "bg-green-50 text-green-600" :
-                "bg-violet-50 text-violet-600"
-              }`}>
-                {item.tag}
-              </span>
-              <span className="text-xs text-foreground font-medium truncate">{item.q}</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
-          </Link>
-        ))}
-      </div>
-
-      {/* Bottom Chat Banner */}
-      <div className="mx-4 mt-4 bg-gradient-to-r from-primary to-blue-600 rounded-xl p-4 flex items-center justify-between">
-        <div>
-          <p className="text-white font-bold text-sm">Still need help?</p>
-          <p className="text-white/70 text-xs mt-0.5">Talk to our support team</p>
-        </div>
-        <a
-          href={CALL_CENTRE}
-          className="flex items-center gap-1.5 bg-white text-primary text-xs font-bold px-3 py-2 rounded-full"
-        >
-          <Phone className="w-3.5 h-3.5" />
-          Call Us
-        </a>
-      </div>
     </div>
   );
 }
