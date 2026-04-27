@@ -14,7 +14,7 @@ import {
 } from "../lib/bookingStorage";
 
 // Time window for retailer-side installation duplicate check
-const INSTALL_DUPLICATE_WINDOW_HOURS = 72;
+const INSTALL_DUPLICATE_WINDOW_HOURS = 24;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PoolItem {

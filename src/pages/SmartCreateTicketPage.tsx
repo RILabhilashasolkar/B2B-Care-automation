@@ -14,7 +14,7 @@ const ACTION_CATEGORY: Record<string, string> = {
 };
 
 // Time window for retailer-side ticket duplicate check
-const TICKET_DUPLICATE_WINDOW_DAYS = 30;
+const TICKET_DUPLICATE_WINDOW_HOURS = 24;
 
 // Call-centre number (same as HelpCenterPage)
 const CALL_CENTRE_TEL  = "tel:18001234567";
@@ -154,7 +154,7 @@ export default function SmartCreateTicketPage() {
   const ticketCustomerMobile =
     effectiveCustomer?.mobile ??
     (hasCustomerMobile ? effectiveItem?.customerMobile : undefined);
-  const dupCutoff = new Date(Date.now() - TICKET_DUPLICATE_WINDOW_DAYS * 24 * 3_600_000);
+  const dupCutoff = new Date(Date.now() - TICKET_DUPLICATE_WINDOW_HOURS * 3_600_000);
   const existingDupTicket =
     form.category && ticketCustomerMobile && !ticketDupAcknowledged
       ? mockCustomerTickets.find(
@@ -763,7 +763,7 @@ export default function SmartCreateTicketPage() {
                   <p className="text-[10px] text-amber-700 mt-0.5 leading-relaxed">
                     A <span className="font-semibold">{form.category}</span> ticket was already raised
                     for this customer within the last{" "}
-                    <span className="font-semibold">{TICKET_DUPLICATE_WINDOW_DAYS} days</span>.
+                    <span className="font-semibold">{TICKET_DUPLICATE_WINDOW_HOURS} hours</span>.
                     Raising another may cause duplicate work.
                   </p>
                   <p className="text-[10px] font-mono text-amber-800 mt-1">
