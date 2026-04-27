@@ -3,15 +3,18 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Search, X, SlidersHorizontal, Package,
   Wrench, Phone, CheckCircle, Calendar, MessageCircle, ChevronDown,
-  ClipboardCheck, MapPin, User,
+  ClipboardCheck, MapPin, User, Upload,
 } from "lucide-react";
 import {
   mockOrders,
   type Order, type Shipment, type OrderItem,
 } from "../lib/mockData";
 import {
-  getBookings, updateBookingStatus, type CustomerBooking,
+  getBookings, updateBookingStatus, getBookingBySerial, type CustomerBooking,
 } from "../lib/bookingStorage";
+
+// Time window for retailer-side installation duplicate check
+const INSTALL_DUPLICATE_WINDOW_HOURS = 72;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PoolItem {
@@ -82,7 +85,19 @@ function CreateInstallationModal({
     preferredDate: "",
     notes: "",
   });
-  const [mobileError, setMobileError] = useState<string>("");
+  const [mobileError, setMobileError]       = useState<string>("");
+  const [invoiceFile, setInvoiceFile]       = useState<File | null>(null);
+  const [duplicateOverridden, setDuplicateOverridden] = useState(false);
+
+  // ── Time-bound duplicate check ────────────────────────────────────────────
+  const existingBooking = getBookingBySerial(item.serialNumber);
+  const duplicateBooking: CustomerBooking | null =
+    !duplicateOverridden && existingBooking
+      ? (Date.now() - new Date(existingBooking.submittedAt).getTime()) <
+        INSTALL_DUPLICATE_WINDOW_HOURS * 3_600_000
+        ? existingBooking
+        : null
+      : null;
 
   const inputCls =
     "w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/40";
@@ -100,7 +115,8 @@ function CreateInstallationModal({
     form.mobile.trim() &&
     form.address.trim() &&
     form.city.trim() &&
-    form.pincode.trim();
+    form.pincode.trim() &&
+    !!invoiceFile;  // invoice is mandatory
 
   return (
     <div
@@ -125,6 +141,45 @@ function CreateInstallationModal({
             SN: {item.serialNumber}
           </p>
         </div>
+
+        {/* ── Time-bound duplicate warning ── */}
+        {duplicateBooking && (
+          <div className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3 mb-4">
+            <div className="flex items-start gap-2">
+              <span className="text-amber-500 text-base leading-none flex-shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-amber-800">Duplicate Request Detected</p>
+                <p className="text-[10px] text-amber-700 mt-0.5 leading-relaxed">
+                  An installation request for this product was already raised within the last{" "}
+                  <span className="font-semibold">{INSTALL_DUPLICATE_WINDOW_HOURS} hours</span>.
+                  Raising another may cause confusion.
+                </p>
+                <p className="text-[10px] font-mono text-amber-800 mt-1">
+                  Ref:{" "}
+                  <span className="font-bold">{duplicateBooking.ref}</span>
+                  {" · "}{duplicateBooking.customerName}
+                  {" · "}{new Date(duplicateBooking.submittedAt).toLocaleString("en-IN", {
+                    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-800 bg-white active:bg-amber-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setDuplicateOverridden(true)}
+                className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold active:opacity-80 transition-opacity"
+              >
+                Raise Anyway
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div>
@@ -211,6 +266,30 @@ function CreateInstallationModal({
               rows={2}
               className={inputCls + " resize-none"}
             />
+          </div>
+
+          {/* ── Invoice Upload (mandatory) ── */}
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">
+              Invoice Copy <span className="text-red-500">*</span>
+            </label>
+            <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-colors bg-background">
+              <Upload className="w-6 h-6 text-muted-foreground mb-1.5" />
+              {invoiceFile ? (
+                <p className="text-xs font-semibold text-primary text-center break-all">{invoiceFile.name}</p>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">Tap to upload invoice</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">PDF, JPG or PNG · Max 5 MB</p>
+                </>
+              )}
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
           </div>
         </div>
 

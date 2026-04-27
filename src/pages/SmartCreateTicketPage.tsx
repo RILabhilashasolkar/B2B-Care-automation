@@ -13,6 +13,13 @@ const ACTION_CATEGORY: Record<string, string> = {
   complaint_against_service: "Complaint Against Service",
 };
 
+// Time window for retailer-side ticket duplicate check
+const TICKET_DUPLICATE_WINDOW_DAYS = 30;
+
+// Call-centre number (same as HelpCenterPage)
+const CALL_CENTRE_TEL  = "tel:18001234567";
+const CALL_CENTRE_DISPLAY = "1800-XXX-XXXX";
+
 export default function SmartCreateTicketPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -140,6 +147,25 @@ export default function SmartCreateTicketPage() {
     subSubcategory: "",
     description:    "",
   });
+  const [invoiceFile, setInvoiceFile]           = useState<File | null>(null);
+  const [ticketDupAcknowledged, setTicketDupAcknowledged] = useState(false);
+
+  // ── Time-bound duplicate ticket check ────────────────────────────────────
+  const ticketCustomerMobile =
+    effectiveCustomer?.mobile ??
+    (hasCustomerMobile ? effectiveItem?.customerMobile : undefined);
+  const dupCutoff = new Date(Date.now() - TICKET_DUPLICATE_WINDOW_DAYS * 24 * 3_600_000);
+  const existingDupTicket =
+    form.category && ticketCustomerMobile && !ticketDupAcknowledged
+      ? mockCustomerTickets.find(
+          (t) =>
+            t.category === form.category &&
+            t.customerMobile === ticketCustomerMobile &&
+            new Date(t.createdAt) > dupCutoff &&
+            t.status !== "Resolved" &&
+            t.status !== "Closed"
+        )
+      : undefined;
 
   const selectedCat = categories.find((c) => c.category === form.category);
   const selectedSub = selectedCat?.subcategories.find((s) => s.name === form.subcategory);
@@ -657,7 +683,35 @@ export default function SmartCreateTicketPage() {
             ))}
           </div>
 
-          {form.category && selectedCat && (
+          {/* ── Complaint Against Service: out of scope — show call centre guidance ── */}
+          {form.category === "Complaint Against Service" && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-4 h-4 text-orange-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-orange-900">Please Contact the Call Centre</p>
+                  <p className="text-[11px] text-orange-700 mt-1 leading-relaxed">
+                    Complaints against service orders are handled exclusively by our support team and cannot be raised through the app at this time.
+                  </p>
+                  <p className="text-[11px] text-orange-700 mt-1 leading-relaxed">
+                    Please call our helpline and our team will log the complaint on your behalf and track it to resolution.
+                  </p>
+                </div>
+              </div>
+              <a
+                href={CALL_CENTRE_TEL}
+                className="mt-3 flex items-center justify-center gap-2 py-2.5 bg-orange-600 text-white rounded-xl text-xs font-bold active:opacity-80 transition-opacity"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                Call {CALL_CENTRE_DISPLAY} Now
+              </a>
+            </div>
+          )}
+
+          {/* Subcategory + issue type — only shown when NOT the out-of-scope category */}
+          {form.category && selectedCat && form.category !== "Complaint Against Service" && (
             <>
               <h3 className="text-xs font-bold text-foreground mt-1">Subcategory</h3>
               <div className="space-y-2">
@@ -678,7 +732,7 @@ export default function SmartCreateTicketPage() {
             </>
           )}
 
-          {form.subcategory && selectedSub && (
+          {form.subcategory && selectedSub && form.category !== "Complaint Against Service" && (
             <>
               <h3 className="text-xs font-bold text-foreground mt-1">Issue Type</h3>
               <div className="flex flex-wrap gap-2">
@@ -699,8 +753,47 @@ export default function SmartCreateTicketPage() {
             </>
           )}
 
+          {/* ── Time-bound duplicate ticket warning ── */}
+          {form.subSubcategory && existingDupTicket && (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-500 text-base leading-none flex-shrink-0">⚠️</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-amber-800">Duplicate Ticket Detected</p>
+                  <p className="text-[10px] text-amber-700 mt-0.5 leading-relaxed">
+                    A <span className="font-semibold">{form.category}</span> ticket was already raised
+                    for this customer within the last{" "}
+                    <span className="font-semibold">{TICKET_DUPLICATE_WINDOW_DAYS} days</span>.
+                    Raising another may cause duplicate work.
+                  </p>
+                  <p className="text-[10px] font-mono text-amber-800 mt-1">
+                    Ticket:{" "}
+                    <span className="font-bold">{existingDupTicket.id}</span>
+                    {" · "}{existingDupTicket.subcategory}
+                    {" · "}Status:{" "}
+                    <span className="font-semibold">{existingDupTicket.status}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-800 bg-white active:bg-amber-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setTicketDupAcknowledged(true); setStep(3); }}
+                  className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold active:opacity-80 transition-opacity"
+                >
+                  Raise Anyway
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-1">
-            {form.subSubcategory && (
+            {form.subSubcategory && !existingDupTicket && form.category !== "Complaint Against Service" && (
               <button
                 onClick={() => setStep(3)}
                 className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-xs font-bold"
@@ -738,23 +831,43 @@ export default function SmartCreateTicketPage() {
             />
           </div>
 
+          {/* Invoice upload — mandatory for customer tickets, optional for self */}
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-              Attachments (optional)
+              Invoice Copy{ticketType === "customer"
+                ? <span className="text-red-500"> *</span>
+                : <span className="text-muted-foreground font-normal"> (optional)</span>}
             </label>
-            <div className="border-2 border-dashed border-border rounded-xl p-5 text-center cursor-pointer hover:border-primary/30 transition-colors">
-              <Upload className="w-7 h-7 text-muted-foreground mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground">
-                Tap to upload photos, invoices or screenshots
+            {ticketType === "customer" && !invoiceFile && (
+              <p className="text-[10px] text-orange-600 mb-1.5 font-medium">
+                ⚠ An invoice copy is required for all customer tickets.
               </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Max 5MB each</p>
-            </div>
+            )}
+            <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-5 text-center cursor-pointer hover:border-primary/30 transition-colors bg-background">
+              <Upload className="w-7 h-7 text-muted-foreground mx-auto mb-2" />
+              {invoiceFile ? (
+                <p className="text-xs font-semibold text-primary break-all">{invoiceFile.name}</p>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Tap to upload invoice, photos or screenshots
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">PDF, JPG or PNG · Max 5 MB</p>
+                </>
+              )}
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={() => setStep(4)}
-              disabled={!form.description}
+              disabled={!form.description || (ticketType === "customer" && !invoiceFile)}
               className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-xs font-bold disabled:opacity-50"
             >
               Review &amp; Submit
