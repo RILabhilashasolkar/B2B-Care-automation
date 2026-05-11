@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { mockOrders, mockCustomers, mockCustomerTickets, ticketCategories } from "../lib/mockData";
+import { mockOrders, mockCustomers, mockSelfTickets, mockCustomerTickets, ticketCategories } from "../lib/mockData";
 import {
   ArrowLeft, Package, User, Phone, MapPin, ShieldCheck,
   AlertCircle, ChevronRight, Upload, CheckCircle, Truck, Wrench,
@@ -151,20 +151,21 @@ export default function SmartCreateTicketPage() {
   const [ticketDupAcknowledged, setTicketDupAcknowledged] = useState(false);
 
   // ── Time-bound duplicate ticket check ────────────────────────────────────
-  const ticketCustomerMobile =
-    effectiveCustomer?.mobile ??
-    (hasCustomerMobile ? effectiveItem?.customerMobile : undefined);
+  // Fires when same orderId OR serialNumber + same category + subcategory
+  // exists in self OR customer tickets within the 24-hour window
   const dupCutoff = new Date(Date.now() - TICKET_DUPLICATE_WINDOW_HOURS * 3_600_000);
+  const allTickets = [...mockSelfTickets, ...mockCustomerTickets];
   const existingDupTicket =
-    form.category && ticketCustomerMobile && !ticketDupAcknowledged
-      ? mockCustomerTickets.find(
-          (t) =>
-            t.category === form.category &&
-            t.customerMobile === ticketCustomerMobile &&
-            new Date(t.createdAt) > dupCutoff &&
-            t.status !== "Resolved" &&
-            t.status !== "Closed"
-        )
+    form.category && form.subcategory && !ticketDupAcknowledged
+      ? allTickets.find((t) => {
+          if (t.status === "Resolved" || t.status === "Closed") return false;
+          if (new Date(t.createdAt) <= dupCutoff)               return false;
+          if (t.category    !== form.category)                  return false;
+          if (t.subcategory !== form.subcategory)               return false;
+          const orderMatch  = !!(effectiveOrder?.id   && t.orderId      === effectiveOrder.id);
+          const serialMatch = !!(effectiveItem?.serialNumber && t.serialNumber === effectiveItem.serialNumber);
+          return orderMatch || serialMatch;
+        })
       : undefined;
 
   const selectedCat = categories.find((c) => c.category === form.category);
@@ -734,62 +735,75 @@ export default function SmartCreateTicketPage() {
 
           {form.subcategory && selectedSub && form.category !== "Complaint Against Service" && (
             <>
-              <h3 className="text-xs font-bold text-foreground mt-1">Issue Type</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedSub.subSub.map((ss) => (
-                  <button
-                    key={ss}
-                    onClick={() => setForm({ ...form, subSubcategory: ss })}
-                    className={`px-3 py-2 rounded-xl border text-xs transition-all ${
-                      form.subSubcategory === ss
-                        ? "border-primary bg-primary/5 text-primary font-semibold"
-                        : "border-border bg-card text-foreground hover:border-primary/30"
-                    }`}
-                  >
-                    {ss}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* ── Time-bound duplicate ticket warning ── */}
-          {form.subSubcategory && existingDupTicket && (
-            <div className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3">
-              <div className="flex items-start gap-2">
-                <span className="text-amber-500 text-base leading-none flex-shrink-0">⚠️</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-amber-800">Duplicate Ticket Detected</p>
-                  <p className="text-[10px] text-amber-700 mt-0.5 leading-relaxed">
-                    A <span className="font-semibold">{form.category}</span> ticket was already raised
-                    for this customer within the last{" "}
-                    <span className="font-semibold">{TICKET_DUPLICATE_WINDOW_HOURS} hours</span>.
-                    Raising another may cause duplicate work.
-                  </p>
-                  <p className="text-[10px] font-mono text-amber-800 mt-1">
-                    Ticket:{" "}
-                    <span className="font-bold">{existingDupTicket.id}</span>
-                    {" · "}{existingDupTicket.subcategory}
-                    {" · "}Status:{" "}
-                    <span className="font-semibold">{existingDupTicket.status}</span>
-                  </p>
+              {/* ── Time-bound duplicate warning fires right after subcategory pick ── */}
+              {existingDupTicket ? (
+                <div className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-500 text-base leading-none flex-shrink-0">⚠️</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-amber-800">Duplicate Ticket Detected</p>
+                      <p className="text-[10px] text-amber-700 mt-0.5 leading-relaxed">
+                        A <span className="font-semibold">{form.category} → {form.subcategory}</span> ticket
+                        was already raised for this{" "}
+                        {effectiveItem?.serialNumber ? "product" : "order"} within the last{" "}
+                        <span className="font-semibold">{TICKET_DUPLICATE_WINDOW_HOURS} hours</span>.
+                        Raising another may cause duplicate work.
+                      </p>
+                      <div className="mt-1.5 space-y-0.5">
+                        <p className="text-[10px] font-mono text-amber-800">
+                          Ticket: <span className="font-bold">{existingDupTicket.id}</span>
+                          {" · "}Status: <span className="font-semibold">{existingDupTicket.status}</span>
+                        </p>
+                        {existingDupTicket.orderId && (
+                          <p className="text-[10px] text-amber-700">
+                            Order: <span className="font-mono font-semibold">{existingDupTicket.orderId.slice(0, 14)}…</span>
+                          </p>
+                        )}
+                        {existingDupTicket.serialNumber && (
+                          <p className="text-[10px] text-amber-700">
+                            Serial: <span className="font-mono font-semibold">{existingDupTicket.serialNumber}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setStep(1)}
+                      className="flex-1 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-800 bg-white active:bg-amber-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => setTicketDupAcknowledged(true)}
+                      className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold active:opacity-80 transition-opacity"
+                    >
+                      Raise Anyway
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-800 bg-white active:bg-amber-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => { setTicketDupAcknowledged(true); setStep(3); }}
-                  className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold active:opacity-80 transition-opacity"
-                >
-                  Raise Anyway
-                </button>
-              </div>
-            </div>
+              ) : (
+                /* Issue type selector — only shown once no duplicate (or acknowledged) */
+                <>
+                  <h3 className="text-xs font-bold text-foreground mt-1">Issue Type</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSub.subSub.map((ss) => (
+                      <button
+                        key={ss}
+                        onClick={() => setForm({ ...form, subSubcategory: ss })}
+                        className={`px-3 py-2 rounded-xl border text-xs transition-all ${
+                          form.subSubcategory === ss
+                            ? "border-primary bg-primary/5 text-primary font-semibold"
+                            : "border-border bg-card text-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {ss}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
           )}
 
           <div className="flex gap-2 pt-1">

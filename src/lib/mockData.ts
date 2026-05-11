@@ -1,5 +1,9 @@
 // Mock data for the entire application
 
+// Dynamic timestamp — used so duplicate-check demo tickets always fall within
+// the 24-hour window, regardless of when the app is opened.
+const _nowISO = new Date().toISOString();
+
 export interface Order {
   id: string;
   date: string;
@@ -242,8 +246,8 @@ export const mockSelfTickets: Ticket[] = [
     status: "Open",
     priority: "High",
     description: "Received 2 units of Samsung TV with cracked screens. Packaging was severely damaged.",
-    createdAt: "2024-12-20T10:30:00",
-    updatedAt: "2024-12-20T14:15:00",
+    createdAt: _nowISO,
+    updatedAt: _nowISO,
     orderId: "BB67BDC1E80E074386E2",
     productName: "Samsung 55\" Crystal 4K UHD TV",
     assignedTo: "Logistics Support",
@@ -303,8 +307,8 @@ export const mockCustomerTickets: Ticket[] = [
     status: "Open",
     priority: "High",
     description: "Customer needs installation of Samsung 55\" TV purchased from our store.",
-    createdAt: "2024-12-21T11:00:00",
-    updatedAt: "2024-12-21T11:00:00",
+    createdAt: _nowISO,
+    updatedAt: _nowISO,
     customerName: "Rajesh Kumar",
     customerMobile: "9876543210",
     productName: "Samsung 55\" Crystal 4K UHD TV",
@@ -367,8 +371,8 @@ export const mockCustomerTickets: Ticket[] = [
     status: "Open",
     priority: "High",
     description: "Customer received Samsung 43\" model instead of the ordered 55\" Crystal 4K UHD TV. Exchange required.",
-    createdAt: "2024-12-22T09:00:00",
-    updatedAt: "2024-12-22T09:00:00",
+    createdAt: _nowISO,
+    updatedAt: _nowISO,
     customerName: "Rajesh Kumar",
     customerMobile: "9876543210",
     productName: "Samsung 55\" Crystal 4K UHD TV",
