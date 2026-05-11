@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { mockOrders, mockCustomers, mockSelfTickets, mockCustomerTickets, ticketCategories } from "../lib/mockData";
 import {
@@ -150,9 +150,13 @@ export default function SmartCreateTicketPage() {
   const [invoiceFile, setInvoiceFile]           = useState<File | null>(null);
   const [ticketDupAcknowledged, setTicketDupAcknowledged] = useState(false);
 
+  // ── Ref for auto-scrolling to duplicate warning ────────────────────────
+  const dupWarningRef = useRef<HTMLDivElement>(null);
+
   // ── Time-bound duplicate ticket check ────────────────────────────────────
   // Fires when same orderId OR serialNumber + same category + subcategory
-  // exists in self OR customer tickets within the 24-hour window
+  // exists in self OR customer tickets within the 24-hour window.
+  // Fallback: if no order/item context available, matches on category+subcategory alone.
   const dupCutoff = new Date(Date.now() - TICKET_DUPLICATE_WINDOW_HOURS * 3_600_000);
   const allTickets = [...mockSelfTickets, ...mockCustomerTickets];
   const existingDupTicket =
@@ -162,11 +166,23 @@ export default function SmartCreateTicketPage() {
           if (new Date(t.createdAt) <= dupCutoff)               return false;
           if (t.category    !== form.category)                  return false;
           if (t.subcategory !== form.subcategory)               return false;
-          const orderMatch  = !!(effectiveOrder?.id   && t.orderId      === effectiveOrder.id);
-          const serialMatch = !!(effectiveItem?.serialNumber && t.serialNumber === effectiveItem.serialNumber);
+          const hasOrderCtx  = !!effectiveOrder?.id;
+          const hasSerialCtx = !!effectiveItem?.serialNumber;
+          // No context at all → warn on category+subcategory match alone
+          if (!hasOrderCtx && !hasSerialCtx) return true;
+          const orderMatch  = hasOrderCtx  && t.orderId      === effectiveOrder!.id;
+          const serialMatch = hasSerialCtx && t.serialNumber === effectiveItem!.serialNumber;
           return orderMatch || serialMatch;
         })
       : undefined;
+
+  // Auto-scroll to duplicate warning when it first appears
+  useEffect(() => {
+    if (existingDupTicket && dupWarningRef.current) {
+      dupWarningRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingDupTicket?.id]);
 
   const selectedCat = categories.find((c) => c.category === form.category);
   const selectedSub = selectedCat?.subcategories.find((s) => s.name === form.subcategory);
@@ -737,7 +753,7 @@ export default function SmartCreateTicketPage() {
             <>
               {/* ── Time-bound duplicate warning fires right after subcategory pick ── */}
               {existingDupTicket ? (
-                <div className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3">
+                <div ref={dupWarningRef} className="bg-amber-50 border border-amber-300 rounded-xl px-3 py-3">
                   <div className="flex items-start gap-2">
                     <span className="text-amber-500 text-base leading-none flex-shrink-0">⚠️</span>
                     <div className="flex-1 min-w-0">

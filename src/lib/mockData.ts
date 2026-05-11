@@ -250,6 +250,7 @@ export const mockSelfTickets: Ticket[] = [
     updatedAt: _nowISO,
     orderId: "BB67BDC1E80E074386E2",
     productName: "Samsung 55\" Crystal 4K UHD TV",
+    serialNumber: "ag29jdba90",
     assignedTo: "Logistics Support",
     timeline: [
       { id: "1", type: "created", description: "Ticket created by retailer", timestamp: "2024-12-20T10:30:00", actor: "Retailer" },
@@ -309,6 +310,7 @@ export const mockCustomerTickets: Ticket[] = [
     description: "Customer needs installation of Samsung 55\" TV purchased from our store.",
     createdAt: _nowISO,
     updatedAt: _nowISO,
+    orderId: "BB67BDC1E80E074386E2",
     customerName: "Rajesh Kumar",
     customerMobile: "9876543210",
     productName: "Samsung 55\" Crystal 4K UHD TV",
